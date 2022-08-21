@@ -56,6 +56,7 @@ export function createElement<K extends HTMLElementTagName>(
     el.addEventListener("copy", handler.handleCopy.bind(handler));
     el.addEventListener("paste", handler.handlePaste.bind(handler));
     el.addEventListener("blur", handler.handleBlur.bind(handler));
+    el.addEventListener("focus", handler.handleFocus.bind(handler));
     el.addEventListener("keydown", handler.handleKeyDown.bind(handler));
     el.addEventListener("keypress", handler.handleKeyPress.bind(handler));
     el.addEventListener("keyup", handler.handleKeyUp.bind(handler));
@@ -83,40 +84,3 @@ export function createElement<K extends HTMLElementTagName>(
   }
   return el;
 }
-
-// export function putContentItem(
-//   el: HTMLElement,
-//   contentItem: ContentItem | ContentItem[],
-//   refresh: boolean = true
-// ) {
-//   if (refresh) {
-//     el.innerHTML = "";
-//   }
-//   const [nodes, noticable] = createElement(contentItem);
-//   if (nodes) {
-//     nodes.forEach((c) => {
-//       el.appendChild(c);
-//     });
-//     noticable.forEach((c) => c.componentDidMount());
-//   }
-//   return [nodes, noticable];
-// }
-
-// export function insertContentItem(
-//   el: HTMLElement,
-//   contentItem: ContentItem | ContentItem[],
-//   range?: Range
-// ) {
-//   if (!range) {
-//     range = document.getSelection().getRangeAt(0);
-//   }
-
-//   const [nodes, noticable] = createElement(contentItem);
-//   if (nodes) {
-//     nodes.reverse().forEach((c) => {
-//       range.insertNode(c);
-//     });
-//     noticable.forEach((c) => c.componentDidMount());
-//   }
-//   return [nodes, noticable];
-// }

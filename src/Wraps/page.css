@@ -1,3 +1,5 @@
+@import url(page.em.css);
+
 .moe-page {
     cursor: text;
     padding: 10px;
@@ -38,7 +40,6 @@
     margin-bottom: 10px;
     background-color: aliceblue;
 }
-
 
 
 
@@ -245,15 +246,6 @@
     color: #aaa;
 }
 
-/* .moe-page h1:focus:before,
-.moe-page h2:focus:before,
-.moe-page h3:focus:before,
-.moe-page h4:focus:before,
-.moe-page h5:focus:before,
-.moe-page h6:focus:before {
- 
-} */
-
 /**
 * table part
 */
@@ -296,39 +288,6 @@
     background-color: lightblue;
 }
 
-
-.moe-page em {
-    font-style: normal;
-}
-
-.moe-page em.em-red {
-    background: lightcoral;
-}
-
-.moe-page em.em-blank {
-    background: black;
-}
-
-.moe-page em.em-blank:hover,
-.moe-page em.em-blank-open {
-    background: lightslategray;
-}
-
-.moe-page em.em-green {
-    background: lightgreen;
-}
-
-.moe-page em.em-blue {
-    background: lightskyblue;
-}
-
-.moe-page em.em-green {
-    background: lightgreen;
-}
-
-.moe-page em.em-yellow {
-    background: lightgoldenrodyellow;
-}
 
 
 

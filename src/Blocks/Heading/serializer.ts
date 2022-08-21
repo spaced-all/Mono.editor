@@ -5,7 +5,6 @@ import {
 } from "../../Inlines/serializer";
 
 import { HTMLElementTagName } from "../../types/dom";
-import { Noticable } from "../../types/noticable";
 import { dom, time } from "../../utils";
 import { ABCBlockElement, ElementProps, ElementState } from "../aBlock";
 import { BlockHandler } from "../aBlock/handler";
@@ -26,7 +25,7 @@ export interface HeadingState extends ABCTextState {
 
 export class Heading extends ABCText<HeadingProps, HeadingState> {
   static elName: string = "heading";
-  blockType: string = "heading";
+  readonly blockType: string = "heading";
 
   public get contentEditableName(): HTMLElementTagName {
     return `h${this.level}` as "h1" | "h2" | "h3" | "h4" | "h5";

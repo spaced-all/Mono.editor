@@ -5,7 +5,6 @@ import {
 } from "../../Inlines/serializer";
 import { InlineElement } from "../../Inlines/types";
 import { HTMLElementTagName } from "../../types/dom";
-import { Noticable } from "../../types/noticable";
 import { dom, time } from "../../utils";
 import { createElement } from "../../utils/contrib";
 import { ABCBlockElement, ElementProps, ElementState } from "../aBlock";
@@ -27,8 +26,7 @@ export interface BlockQuoteState extends ABCTextState {
 
 export class BlockQuote extends ABCText<BlockQuoteProps, BlockQuoteState> {
   static elName: string = "blockquote";
-  blockType: string = "blockquote";
-  static deserialize(el: HTMLLabelElement) {}
+  readonly blockType: string = "blockquote";
 
   public get contentEditableName(): HTMLElementTagName {
     return "p";
@@ -42,7 +40,7 @@ export class BlockQuote extends ABCText<BlockQuoteProps, BlockQuoteState> {
     return BlockquoteHandler;
   }
 
-  wrapContainer(el: HTMLElement): HTMLElement {
+  renderWrapper(el: HTMLElement): HTMLElement {
     return createElement("blockquote", {
       children: [el],
     });

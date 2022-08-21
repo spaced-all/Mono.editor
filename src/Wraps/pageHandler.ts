@@ -98,7 +98,7 @@ export class PageHandler extends Handler {
   tryHandleShortcut(e: KeyboardEvent): boolean {
     const typeHistory = this.edit.typeHistory.join("");
     if (typeHistory.slice(-2) === "$$") {
-      const textRange = dom.previousTextRange(this.currentContainer());
+      const textRange = dom.previousTextRange(this.currentEditable());
       if (textRange.cloneContents().textContent.match(/[￥$]/)) {
         textRange.deleteContents();
       }
@@ -111,7 +111,7 @@ export class PageHandler extends Handler {
 
       const range = document.getSelection().getRangeAt(0);
       range.insertNode(root);
-      noticable.notify();
+      this.serializer.consumeUpdate([noticable]);
 
       return true;
     } else if (typeHistory.slice(-1) === "/") {
@@ -140,6 +140,7 @@ export class PageHandler extends Handler {
       return;
     }
   }
+
   updateActiveBlock(el) {
     console.log(el);
     if (this.activeBlock !== el) {
@@ -181,44 +182,44 @@ export class PageHandler extends Handler {
       const parent = dom.findParentMatchTagName(
         e.target as Node,
         "label",
-        this.currentContainer()
+        this.currentEditable()
       );
       if (parent) {
-        const pos = dom.createPosition(this.currentContainer(), parent, 0);
+        const pos = dom.createPosition(this.currentEditable(), parent, 0);
         dom.setPosition(pos);
       }
     }
     this.richhint.autoUpdate({
-      root: this.currentContainer(),
+      root: this.currentEditable(),
       click: true,
     });
     console.log();
   }
 
-  prevContainer(): HTMLElement {
-    const el = this.currentContainer();
-    let prev = this.activeBlockHandler.prevContainer(el);
+  prevEditable(): HTMLElement {
+    const el = this.currentEditable();
+    let prev = this.activeBlockHandler.prevEditable(el);
     if (!prev) {
-      prev = this.prevBlockHandler.lastContainer();
+      prev = this.prevBlockHandler.lastEditable();
     }
     return prev;
   }
-  nextContainer(): HTMLElement {
-    const el = this.currentContainer();
+  nextEditable(): HTMLElement {
+    const el = this.currentEditable();
     const cur = this.activeBlockHandler;
-    let next = this.activeBlockHandler.nextContainer(el);
+    let next = this.activeBlockHandler.nextEditable(el);
     if (!next) {
       if (cur === this.nextBlockHandler) {
-        next = cur.lastContainer();
+        next = cur.lastEditable();
       } else {
-        next = this.nextBlockHandler.firstContainer();
+        next = this.nextBlockHandler.firstEditable();
       }
     }
     return next;
   }
 
-  currentContainer(): HTMLElement {
-    return this.activeBlockHandler.currentContainer();
+  currentEditable(): HTMLElement {
+    return this.activeBlockHandler.currentEditable();
   }
 
   handleKeyUp(e: KeyboardEvent): void {
@@ -227,11 +228,11 @@ export class PageHandler extends Handler {
     }
 
     if (e.key === "ArrowUp" || e.key === "ArrowDown") {
-      this.richhint.autoUpdate({ root: this.currentContainer() });
+      this.richhint.autoUpdate({ root: this.currentEditable() });
       e.preventDefault();
     } else if (e.key === "Home" || e.key === "End") {
       this.richhint.safeMousePosition();
-      this.richhint.autoUpdate({ root: this.currentContainer() });
+      this.richhint.autoUpdate({ root: this.currentEditable() });
       e.preventDefault();
     } else if (e.key === "Backspace" || e.key === "Delete") {
       // this.richhint.autoUpdate({ force: true, root: this.currentContainer() });
@@ -247,11 +248,13 @@ export class PageHandler extends Handler {
     }
     e.preventDefault();
   }
+
   handleSpaceDown(e: KeyboardEvent) {
     if (this.activeBlockHandler.handleSpaceDown(e)) {
       return;
     }
   }
+
   handleTabDown(e: KeyboardEvent) {
     if (this.activeBlockHandler.handleTabDown(e)) {
       return;
@@ -259,36 +262,37 @@ export class PageHandler extends Handler {
     e.preventDefault();
   }
 
+  activeNextEditable() {}
+  activePrevEditable() {}
+
   handleArrowKeyDown(e: KeyboardEvent) {
     if (this.activeBlockHandler.handleArrowKeyDown(e)) {
       return;
     }
-    const root = this.currentContainer();
+
+    const root = this.currentEditable();
     if (!root) {
       return;
     }
 
     if (e.key === "ArrowUp") {
       if (dom.isFirstLine(root)) {
-        const neighbor = this.prevContainer();
+        const neighbor = this.prevEditable();
         if (neighbor) {
-          if (this.prevBlockHandler.elementType === "card") {
-            const offset = dom.getCaretReletivePosition(
-              this.currentContainer()
-            );
-            dom.setCaretReletivePositionAtLastLine(neighbor, offset);
-          } else {
-            // active text area or make focus
-          }
+          const offset = dom.getCaretReletivePosition(this.currentEditable());
+          dom.setCaretReletivePositionAtLastLine(neighbor, offset);
         }
         e.preventDefault();
         this.richhint.autoUpdate({ root: root });
       }
     } else if (e.key === "ArrowDown") {
       if (dom.isLastLine(root)) {
-        const neighbor = this.nextContainer();
+        const neighbor = this.nextEditable();
+
         if (neighbor) {
-          const offset = dom.getCaretReletivePosition(this.currentContainer());
+          // 需要考虑  container 的跳转和 block 的跳转
+          // TODO 如果挑到了不同 block，那就要判断 block 的 type 是不是 card
+          const offset = dom.getCaretReletivePosition(this.currentEditable());
           dom.setCaretReletivePosition(neighbor, offset);
         }
         e.preventDefault();
@@ -299,7 +303,7 @@ export class PageHandler extends Handler {
 
       let pos = dom.previousValidPosition(root, sel.focusNode, sel.focusOffset);
       if (!pos) {
-        const neighbor = this.prevContainer();
+        const neighbor = this.prevEditable();
         console.log(neighbor);
         if (neighbor) {
           dom.setCaretReletivePosition(neighbor, -1);
@@ -349,7 +353,7 @@ export class PageHandler extends Handler {
       let pos: RelPosition;
       pos = dom.nextValidPosition(root, sel.focusNode, sel.focusOffset);
       if (!pos) {
-        const neighbor = this.nextContainer();
+        const neighbor = this.nextEditable();
         if (neighbor) {
           dom.setCaretReletivePosition(neighbor, 0);
         }
@@ -395,7 +399,7 @@ export class PageHandler extends Handler {
       const order = blockRoot.getAttribute("data-order");
       const container = this.state.blockSerializers
         .getValue(order)
-        .handler.getContainerByNode(node);
+        .handler.getEditableByNode(node);
       return {
         container: container,
         order: order,
@@ -429,9 +433,9 @@ export class PageHandler extends Handler {
 
   processEdit(message) {}
   propgateChange(e: ChangeBlock) {
-    const offset = dom.getCaretReletivePosition(this.currentContainer());
+    const offset = dom.getCaretReletivePosition(this.currentEditable());
     const focusedSerializer = this.serializer.changeBlock(e.focus);
-    const focusedContainer = focusedSerializer.handler.firstContainer();
+    const focusedContainer = focusedSerializer.handler.firstEditable();
     dom.setCaretReletivePosition(focusedContainer, offset);
     this.richhint.autoUpdate({
       root: focusedContainer,
@@ -448,9 +452,9 @@ export class PageHandler extends Handler {
       this.serializer.insertBlockAfter(e.next, e.order);
     }
     if (e.focus) {
-      const offset = dom.getCaretReletivePosition(this.currentContainer());
+      const offset = dom.getCaretReletivePosition(this.currentEditable());
       const focusedSerializer = this.serializer.changeBlock(e.focus);
-      const focusedContainer = focusedSerializer.handler.firstContainer();
+      const focusedContainer = focusedSerializer.handler.firstEditable();
       dom.setCaretReletivePosition(focusedContainer, offset);
       this.richhint.autoUpdate({
         root: focusedContainer,
@@ -463,7 +467,7 @@ export class PageHandler extends Handler {
     const newSerializer = this.serializer.insertBlockAfter(e.block, e.order);
     if (e.offset !== undefined) {
       dom.setCaretReletivePosition(
-        newSerializer.handler.firstContainer(),
+        newSerializer.handler.firstEditable(),
         e.offset
       );
     }
@@ -473,15 +477,15 @@ export class PageHandler extends Handler {
 
     if (e.mergeType === "backspace") {
       neighbor = this.prevBlockHandler;
-      const offset = dom.getContentSize(neighbor.lastContainer());
+      const offset = dom.getContentSize(neighbor.lastEditable());
       if (e.elementType === "text" && neighbor.elementType !== "card") {
         neighbor.appendElementsAtLast(e.children);
         this.serializer.removeBlock(e.order);
-        dom.setCaretReletivePosition(neighbor.lastContainer(), offset);
-        let pos = dom.currentPosition(neighbor.lastContainer());
+        dom.setCaretReletivePosition(neighbor.lastEditable(), offset);
+        let pos = dom.currentPosition(neighbor.lastEditable());
         pos = this.richhint.safePosition(pos);
         dom.setPosition(pos);
-        this.richhint.autoUpdate({ root: neighbor.lastContainer() });
+        this.richhint.autoUpdate({ root: neighbor.lastEditable() });
       } else {
         // neighbor.elementType === 'card'
         // select neighbor
@@ -492,14 +496,12 @@ export class PageHandler extends Handler {
       ).handler;
       neighbor = this.nextBlockHandler;
       if (e.elementType === "text") {
-        cur.appendElementsAtLast(
-          dom.validChildNodes(neighbor.firstContainer())
-        );
+        cur.appendElementsAtLast(dom.validChildNodes(neighbor.firstEditable()));
         if (neighbor.elementType === "text") {
           this.serializer.removeBlock(neighbor.serializer.order);
         } else if (neighbor.elementType === "list") {
           (neighbor as ABCListHandler).removeContainer(
-            neighbor.firstContainer()
+            neighbor.firstEditable()
           );
           if (!(neighbor as ABCListHandler).hasContainer()) {
             this.serializer.removeBlock(neighbor.serializer.order);
@@ -508,11 +510,11 @@ export class PageHandler extends Handler {
           // neighbor.elementType === 'card'
           // select neighbor
         }
-        this.richhint.autoUpdate({ root: neighbor.lastContainer() });
+        this.richhint.autoUpdate({ root: neighbor.lastEditable() });
       } else if (e.elementType === "list") {
         if (neighbor.elementType === "text") {
           cur.appendElementsAtLast(
-            dom.validChildNodes(neighbor.firstContainer())
+            dom.validChildNodes(neighbor.firstEditable())
           );
           this.serializer.removeBlock(neighbor.serializer.order);
         } else if (neighbor.elementType === "list") {
@@ -542,16 +544,16 @@ export class PageHandler extends Handler {
     const state = this.selectionState;
     let tag;
     if (state === "collapsed") {
-      const root = this.currentContainer();
-      if ((tag = style.isInStyleBound(this.currentContainer(), "left"))) {
+      const root = this.currentEditable();
+      if ((tag = style.isInStyleBound(this.currentEditable(), "left"))) {
         const styleName = style.tagToStyle(tag);
         if (styleName) {
-          style.deleteStyle(tag, this.currentContainer());
+          style.deleteStyle(tag, this.currentEditable());
           e.preventDefault();
         }
 
         return;
-      } else if ((tag = dom.isInLabelBound(this.currentContainer(), "left"))) {
+      } else if ((tag = dom.isInLabelBound(this.currentEditable(), "left"))) {
         let pos = dom.previousValidPosition(root, tag, 0);
 
         tag.parentElement.removeChild(tag);
@@ -578,7 +580,7 @@ export class PageHandler extends Handler {
     e.preventDefault();
   }
   handleHomeDown(e: KeyboardEvent) {
-    const cur = this.currentContainer();
+    const cur = this.currentEditable();
     dom.setCaretReletivePosition(cur, 0);
     e.preventDefault();
   }
@@ -586,7 +588,7 @@ export class PageHandler extends Handler {
     if (this.activeBlockHandler.handleEndDown(e)) {
       return;
     }
-    const cur = this.currentContainer();
+    const cur = this.currentEditable();
     dom.setCaretReletivePosition(cur, -1);
     let pos = this.richhint.safePosition(dom.currentPosition(cur));
     dom.setPosition(pos);
@@ -610,14 +612,14 @@ export class PageHandler extends Handler {
     console.log(["Page Key Down", e]);
     // dom.currentPosition(this.)
     if (e.key === "Enter") {
-      const pos = dom.currentPosition(this.currentContainer());
+      const pos = dom.currentPosition(this.currentEditable());
 
       if (dom.isTag(pos.container, "label")) {
         const lb: HTMLLabelElement = pos.container as HTMLLabelElement;
         lb.click();
         // lb.classList.add("inline-key-hovered");
         this.richhint.autoUpdate({
-          root: this.currentContainer(),
+          root: this.currentEditable(),
           enter: true,
         });
         e.preventDefault();
@@ -653,10 +655,10 @@ export class PageHandler extends Handler {
     } else {
       if (e.metaKey) {
         if (style.supportStyleKey(e.key)) {
-          style.applyStyle(e.key, this.currentContainer());
+          style.applyStyle(e.key, this.currentEditable());
           this.richhint.autoUpdate({
             force: true,
-            root: this.currentContainer(),
+            root: this.currentEditable(),
           });
           e.preventDefault();
           return;
@@ -696,4 +698,10 @@ export class PageHandler extends Handler {
   }
   handleCopy(e: ClipboardEvent): boolean | void {}
   handlePaste(e: ClipboardEvent): boolean | void {}
+  handleFocus(e: FocusEvent): boolean | void {
+    // console.log(e);
+  }
+  handleBlur(e: FocusEvent): boolean | void {
+    // console.log(e);
+  }
 }

@@ -5,7 +5,6 @@ import {
 } from "../../Inlines/serializer";
 import { InlineElement } from "../../Inlines/types";
 import { HTMLElementTagName } from "../../types/dom";
-import { Noticable } from "../../types/noticable";
 import { dom, time } from "../../utils";
 import { createElement } from "../../utils/contrib";
 import { ABCBlockElement, ElementProps, ElementState } from "../aBlock";
@@ -27,7 +26,7 @@ export interface ListState extends ABCListState {
 
 export class List extends ABCList<ListProps, ListState> {
   static elName: string = "list";
-  blockType: string = "list";
+  readonly blockType: string = "list";
 
   public get contentEditableName(): HTMLElementTagName {
     return "ul";

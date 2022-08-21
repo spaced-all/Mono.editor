@@ -1,11 +1,10 @@
-import KaTeX from "katex";
-import "katex/dist/katex.min.css";
-
 import { ABCInline, ElementProps, ElementState } from "./abc";
 
 // import * as op from "../utils";
 import { createElement } from "../utils/contrib";
 import { ExtendInlineComponent } from "./types";
+import { Renderable } from "../types/renderable";
+import { latex } from "../utils";
 
 export interface MathData extends ExtendInlineComponent {
   kind: "@math";
@@ -16,26 +15,6 @@ export interface MathProps extends ElementProps {
 }
 export interface MathState extends ElementState {
   data: MathData;
-}
-
-function generateHTML(math: string, el) {
-  const { errorColor, renderError } = {} as any;
-  let html, error;
-  try {
-    html = KaTeX.renderToString(math, {
-      displayMode: false,
-      errorColor,
-      throwOnError: !!renderError,
-    });
-    el.innerHTML = html;
-  } catch (e) {
-    if (error instanceof KaTeX.ParseError || error instanceof TypeError) {
-      error = e;
-      el.innerHTML = error;
-    }
-    throw e;
-  }
-  return { html, error };
 }
 
 function expandWidth(render, space) {
@@ -86,7 +65,8 @@ export class IMath extends ABCInline<MathProps, MathState> {
 
   handleInput(e: Event) {
     const val = (e.target as any).value;
-    const { html, error } = generateHTML(val, this.span);
+
+    const { html, error } = latex.generateHTML(val, this.span);
     if (error) {
       this.span.innerHTML = error;
     } else {
@@ -103,7 +83,7 @@ export class IMath extends ABCInline<MathProps, MathState> {
       this.root.remove();
     } else {
       this.math = this.input.value;
-      const { html, error } = generateHTML(this.math, this.span);
+      const { html, error } = latex.generateHTML(this.math, this.span);
       if (error) {
         this.span.innerHTML = error;
       } else {
@@ -127,14 +107,13 @@ export class IMath extends ABCInline<MathProps, MathState> {
     this.state.data.value = math;
   }
 
-  componentDidMount(): void {
-    console.log("expand");
-    expandWidth(this.span, this.space);
-  }
+  rootDidMount(): void {}
 
-  componentDidRendered(): void {
+  childrenDidMount(): void {
     if (this.props.message && this.props.message.activate) {
       this.root.click();
+    } else {
+      expandWidth(this.span, this.space);
     }
   }
 
@@ -147,7 +126,7 @@ export class IMath extends ABCInline<MathProps, MathState> {
   handleKeyDown(e: KeyboardEvent) {
     if (e.key === "Escape") {
       e.preventDefault();
-      generateHTML(this.math, this.span);
+      latex.generateHTML(this.math, this.span);
       expandWidth(this.span, this.space);
       this.from.focus();
       return;
@@ -167,7 +146,13 @@ export class IMath extends ABCInline<MathProps, MathState> {
     e.stopPropagation();
   }
 
-  renderInner(): Node[] {
+  renderRoot(): HTMLElement {
+    const root = super.renderRoot();
+    root.setAttribute("data-value", this.math);
+    root.setAttribute("data-type", "math");
+    return root;
+  }
+  renderChildren(): [Node[], Renderable[]] {
     const nodes: Node[] = [];
 
     const ipt = createElement("input", {
@@ -200,15 +185,9 @@ export class IMath extends ABCInline<MathProps, MathState> {
     this.span = span;
 
     if (this.math) {
-      generateHTML(this.math, this.span);
+      latex.generateHTML(this.math, this.span);
     }
-    return nodes;
-  }
-
-  render(): HTMLLabelElement {
-    const root = super.render();
-    root.setAttribute("data-value", this.math);
-    root.setAttribute("data-type", "math");
-    return root;
+    console.log(["Render math", this.math, this.span]);
+    return [nodes, []];
   }
 }

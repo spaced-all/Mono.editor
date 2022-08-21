@@ -9,24 +9,43 @@ import {
   listData,
   olData,
   codeData,
+  imageData,
+  equationData,
+  tableData,
 } from "./example";
 import { Page } from "../src/Wraps/Page";
 
 const page = new Page({
   initialData: [
-    { type: "paragraph", paragraph: paragraphData, order: "b" },
-    { type: "blockquote", blockquote: blockquoteData, order: "c" },
+    { type: "heading", heading: headingData, order: "b" },
+    { type: "paragraph", paragraph: paragraphData, order: "bb" },
+    { type: "blockquote", blockquote: blockquoteData, order: "bc" },
+
+    { type: "heading", heading: headingData, order: "c" },
+    { type: "list", list: listData, order: "cb" },
+    { type: "orderedlist", orderedlist: olData, order: "cd" },
+
     { type: "heading", heading: headingData, order: "d" },
-    { type: "list", list: listData, order: "e" },
-    { type: "orderedlist", orderedlist: olData, order: "f" },
-    { type: "code", code: codeData, order: "g" },
+    { type: "table", table: tableData, order: "db" },
+
+    { type: "heading", heading: headingData, order: "g" },
+    { type: "code", code: codeData, order: "gb" },
+    { type: "image", image: imageData, order: "gc" },
+    { type: "equation", equation: equationData, order: "gd" },
   ],
 });
 
-const root = page.renderRoot();
-document.body.appendChild(root);
+page.insertAfter(document.body);
 
-// const div = page.render();
-// console.log(div);
+const page2 = new Page({
+  initialData: [
+    { type: "heading", heading: headingData, order: "d" },
+    { type: "blockquote", blockquote: blockquoteData, order: "c" },
+    { type: "code", code: codeData, order: "g" },
+    { type: "paragraph", paragraph: paragraphData, order: "b" },
+    { type: "orderedlist", orderedlist: olData, order: "f" },
+    { type: "list", list: listData, order: "e" },
+  ],
+});
 
-page.replaceChildren(document.body);
+page2.insertAfter(document.body);

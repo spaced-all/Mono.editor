@@ -1,33 +1,21 @@
 import produce from "immer";
-import { Code } from ".";
+import { Equation } from ".";
 import { serializeInlineElement } from "../../Inlines/serializer";
 import { dom, time } from "../../utils";
 import { indexOfNode } from "../../utils/dom";
 import { BlockHandler } from "../aBlock";
 
-export class CodeHandler extends BlockHandler {
-  serializer: Code;
-
-  public get edit(): HTMLTextAreaElement {
-    return this.serializer.edit;
-  }
-
-  public get display(): HTMLElement {
-    return this.serializer.display;
-  }
-
-  public get highlight(): HTMLElement {
-    return this.serializer.highlight;
-  }
+export class EquationHandler extends BlockHandler {
+  serializer: Equation;
 
   handleMouseDown(e: MouseEvent): boolean | void {
     // e.preventDefault();
-    console.log(["Code", e]);
+    console.log(["Equation", e]);
     return true;
   }
 
   handleMouseUp(e: MouseEvent): boolean | void {
-    console.log(["Code", e]);
+    console.log(["Equation", e]);
     return true;
   }
   handleArrowKeyDown(e: KeyboardEvent): boolean | void {
@@ -57,38 +45,39 @@ export class CodeHandler extends BlockHandler {
   }
   handleKeyDown(e: KeyboardEvent): boolean | void {
     // e.preventDefault();
-    console.log(["CodeDown", e]);
-    if (e.key.match("Arrow")) {
-      const range = document.createRange();
-      dom.setCaretReletivePosition(
-        this.display,
-        this.edit.selectionStart,
-        range,
-        false
-      );
-      if (e.key === "ArrowUp" && dom.isFirstLine(this.display, range)) {
-        console.log("break");
-      } else if (e.key === "ArrowDown" && dom.isLastLine(this.display, range)) {
-        console.log("break");
-      }
-    }
+    console.log(["EquationDown", e]);
+
+    // if (e.key === "Enter") {
+    //   // document.createElement("br");
+    //   const newLine = document.createTextNode("\n");
+    //   document.getSelection().getRangeAt(0).insertNode(newLine);
+    //   document.getSelection().setPosition(newLine, 1);
+    //   this.serializer.updateEquation(this.serializer.outer.innerHTML);
+    //   e.preventDefault();
+    // } else if (e.key === "Backspace") {
+    //   if (this.isCursorLeft()) {
+    //     e.preventDefault();
+    //   }
+    // } else if (e.key.match("Arrow")) {
+    //   this.handleArrowKeyDown(e);
+    // }
+
     return true;
   }
   handleKeyUp(e: KeyboardEvent): boolean | void {
     // e.preventDefault();
-    // this.edit.selectionStart
-    
+    console.log(["EquationUp", e]);
     // e.preventDefault();
     return true;
   }
   handleKeyPress(e: KeyboardEvent): boolean | void {
     // e.preventDefault();
 
-    console.log(["CodePress", e]);
+    console.log(["EquationPress", e]);
     return true;
   }
   handleInput(e: Event): boolean | void {
-    // this.serializer.updateCode(this.serializer.outer.innerHTML);
+    // this.serializer.updateEquation(this.serializer.outer.innerHTML);
     return true;
   }
   handleEnterDown(e: KeyboardEvent): boolean | void {

@@ -9,11 +9,11 @@ import {
 } from "../Blocks/types";
 import { dom } from "../utils";
 import { HTMLElementType } from "../types/dom";
-import { Noticable } from "../types/noticable";
 import { Renderable } from "../types/renderable";
 import { createElement } from "../utils/contrib";
 
 import "./page.css";
+
 import { PageHandler } from "./pageHandler";
 import LinkedDict from "../struct/LinkedDict";
 import { midString } from "../utils/order";
@@ -67,7 +67,7 @@ export class Page extends Renderable {
     this.handler = new PageHandler(this);
   }
 
-  componentDidMount(): void {}
+  rootDidMount(): void {}
 
   /**
    * 按 order 顺序遍历所有 block
@@ -96,6 +96,7 @@ export class Page extends Renderable {
     this.state.blockSerializers.replace(blockData.order, blockSerializer);
     return blockSerializer;
   }
+
   insertBlockAt(
     blockData: DefaultBlockInfo,
     order: string,
@@ -139,10 +140,10 @@ export class Page extends Renderable {
 
     return blockSerializer;
   }
+
   insertBlockAfter(blockData: DefaultBlockInfo, order: string) {
     return this.insertBlockAt(blockData, order, "after");
   }
-
   insertBlockBefore(blockData: DefaultBlockInfo, order?: string) {
     return this.insertBlockAt(blockData, order, "before");
   }
@@ -165,44 +166,38 @@ export class Page extends Renderable {
     return root;
   }
 
-  render(): HTMLElement {
+  renderChildren(): [Node[], Renderable[]] {
     const { order, orderedBlock } = this.state;
-    if (!this.root) {
-      const root = this.renderRoot();
-      this.root = root;
-
-      // const blockElements: HTMLElement[] = [];
-      const noticables: Noticable[] = [];
-      order.forEach((oid, ind) => {
-        const blockInfo = orderedBlock[oid];
-        if (!blockInfo) {
-          return;
-        }
-        const blockType = blockRegister.get(blockInfo.type);
-        const blockData = orderedBlock[oid];
-        const blockSerializer = new blockType({
-          initialData: blockData as DefaultBlockInfo,
-          metaInfo: {
-            order: blockInfo.order,
-            id: blockInfo.id,
-            type: blockInfo.type,
-          },
-        });
-
-        const [node, noticable] = blockSerializer.lazyRender();
-        // blockElements.push(node);
-        noticables.push(noticable);
-
-        blockSerializer.handler.bindParent(this.handler);
-        this.state.blockSerializers.set(oid, blockSerializer);
-
-        root.appendChild(node);
+    const noticables: Renderable[] = [];
+    const nodes: Node[] = [];
+    order.forEach((oid, ind) => {
+      const blockInfo = orderedBlock[oid];
+      if (!blockInfo) {
+        return;
+      }
+      const blockType = blockRegister.get(blockInfo.type);
+      const blockData = orderedBlock[oid];
+      if (blockType === undefined) {
+        console.log(["blockType", blockInfo]);
+        return;
+      }
+      const blockSerializer = new blockType({
+        initialData: blockData as DefaultBlockInfo,
+        metaInfo: {
+          order: blockInfo.order,
+          id: blockInfo.id,
+          type: blockInfo.type,
+        },
       });
 
-      // blockElements.forEach((c) => );
-      this.pushNotify(...noticables);
-    }
+      const [node, noticable] = blockSerializer.lazyRender();
+      // blockElements.push(node);
+      noticables.push(noticable);
+      nodes.push(node);
+      blockSerializer.handler.bindParent(this.handler);
+      this.state.blockSerializers.set(oid, blockSerializer);
+    });
 
-    return this.root;
+    return [nodes, noticables];
   }
 }

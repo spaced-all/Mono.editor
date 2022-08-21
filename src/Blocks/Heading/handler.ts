@@ -10,7 +10,7 @@ export class HeadingHandler extends ABCTextHandler {
   serializer: Heading;
   handleSpaceDown(e: KeyboardEvent): boolean | void {
     console.log(["Paragraph", e]);
-    const key = dom.textContentBefore(this.currentContainer()).trim();
+    const key = dom.textContentBefore(this.currentEditable()).trim();
     let data: DefaultBlockInfo;
     let newData: DefaultBlockInfo;
     const lastEditTime = time.getTime();
@@ -20,7 +20,7 @@ export class HeadingHandler extends ABCTextHandler {
       case "###":
       case "####":
       case "#####":
-        dom.deleteTextBefore(this.currentContainer());
+        dom.deleteTextBefore(this.currentEditable());
         if (this.serializer.data.level === key.length) {
           data = this.serializer.serializeBlockInfo();
           newData = produce(data, (draft: DefaultBlockInfo) => {

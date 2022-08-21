@@ -1,9 +1,12 @@
 import {
   BlockQuoteData,
   CodeData,
+  EquationData,
   HeadingData,
+  ImageData,
   OrderedListData,
   ParagraphData,
+  TableData,
   UnorderedListData,
 } from "../src/Blocks/types";
 import { InlineElementMap } from "../src/Inlines/types";
@@ -86,10 +89,28 @@ export const olData: OrderedListData = {
   ],
 };
 
+export const tableData: TableData = {
+  kind: "table",
+
+  items: [[{ children: [bi, bold] }], [{ children: [bi, bold] }]],
+};
+
 export const codeData: CodeData = {
   kind: "code",
   code: [
     'import { Paragraph } from "./Blocks/Paragraph/serializer";',
     'console.log("Hello World")',
   ],
+};
+
+export const imageData: ImageData = {
+  kind: "image",
+  src: "http://browser9.qhimg.com/bdr/__85/t01028e5f2ec69e423d.jpg",
+  caption: [bold, bi],
+};
+
+export const equationData: EquationData = {
+  kind: "equation",
+  equation: "\\sum_{i=0}^n i",
+  caption: [bold, bi],
 };

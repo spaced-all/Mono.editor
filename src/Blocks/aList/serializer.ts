@@ -5,7 +5,7 @@ import {
 } from "../../Inlines/serializer";
 import { InlineElement } from "../../Inlines/types";
 import { HTMLElementTagName } from "../../types/dom";
-import { Noticable } from "../../types/noticable";
+import { Renderable } from "../../types/renderable";
 import { dom, time } from "../../utils";
 import { createElement } from "../../utils/contrib";
 import { ABCBlockElement, ElementProps, ElementState } from "../aBlock";
@@ -89,22 +89,21 @@ export class ABCList<
   }
 
   appendContainer(children: InlineElement[], level?) {
-    const [nodes, noticables] = renderInlineElement(children);
+    const [nodes, renderables] = renderInlineElement(children);
     const li = this.createLi(level, null, null, nodes);
     this.outer.appendChild(li);
-    noticables.forEach((c) => c.notify());
-
+    this.consumeUpdate(renderables);
     this.updateValue();
   }
+
   appendContainerChild(li) {
     const level = parseFloat(li.getAttribute("data-level"));
     this.updateLi(li, level);
     this.outer.appendChild(li);
   }
 
-  renderInner(): Node[] {
-    const lvstack = [];
-
+  renderInner(): [Node[], Renderable[]] {
+    const renderables: Renderable[] = [];
     const res = this.data.items.map((c, ind) => {
       const [nodes, noticables] = renderInlineElement(c.children);
       const li = createElement("li", {
@@ -112,12 +111,12 @@ export class ABCList<
       });
       this.updateLi(li, c.level, ind);
 
-      this.pushNotify(...noticables);
+      renderables.push(...noticables);
       return li;
     });
 
     this.updateValue(res);
-    return res;
+    return [res, renderables];
   }
 
   updateValue(containers?: HTMLLIElement[]) {}

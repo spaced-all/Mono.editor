@@ -25,8 +25,7 @@ export interface ParagraphState extends ABCTextState {
 
 export class Paragraph extends ABCText<ParagraphProps, ParagraphState> {
   static elName: string = "paragraph";
-  blockType: string = "paragraph";
-  static deserialize(el: HTMLLabelElement) {}
+  readonly blockType: string = "paragraph";
 
   public get contentEditableName(): HTMLElementTagName {
     return "p";

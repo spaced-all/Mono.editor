@@ -5,7 +5,6 @@ import {
 } from "../../Inlines/serializer";
 import { InlineElement } from "../../Inlines/types";
 import { HTMLElementTagName } from "../../types/dom";
-import { Noticable } from "../../types/noticable";
 import { dom, time } from "../../utils";
 import { createElement } from "../../utils/contrib";
 import { ABCBlockElement, ElementProps, ElementState } from "../aBlock";
@@ -32,8 +31,7 @@ export interface OrderedListState extends ABCListState {
 
 export class OrderedList extends ABCList<OrderedListProps, OrderedListState> {
   static elName: string = "orderedlist";
-  blockType: string = "orderedlist";
-  static deserialize(el: HTMLLabelElement) {}
+  readonly blockType: string = "orderedlist";
 
   public get contentEditableName(): HTMLElementTagName {
     return "ol";
@@ -82,24 +80,6 @@ export class OrderedList extends ABCList<OrderedListProps, OrderedListState> {
       li.innerHTML = "";
       li.append(...children);
     }
-  }
-
-  renderInner(): Node[] {
-    const lvstack = [];
-
-    const res = this.data.items.map((c, ind) => {
-      const [nodes, noticables] = renderInlineElement(c.children);
-      const li = createElement("li", {
-        children: nodes,
-      });
-      this.updateLi(li, c.level, ind);
-
-      this.pushNotify(...noticables);
-      return li;
-    });
-
-    this.updateValue(res);
-    return res;
   }
 
   updateValue(containers?: HTMLLIElement[]) {

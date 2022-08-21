@@ -22,7 +22,7 @@ export class ParagraphHandler extends ABCTextHandler {
 
   handleSpaceDown(e: KeyboardEvent): boolean | void {
     console.log(["Paragraph", e]);
-    const key = dom.textContentBefore(this.currentContainer()).trim();
+    const key = dom.textContentBefore(this.currentEditable()).trim();
     let data: DefaultBlockInfo;
     let newData: DefaultBlockInfo;
     const lastEditTime = time.getTime();
@@ -32,7 +32,7 @@ export class ParagraphHandler extends ABCTextHandler {
       case "###":
       case "####":
       case "#####":
-        dom.deleteTextBefore(this.currentContainer());
+        dom.deleteTextBefore(this.currentEditable());
         data = this.serializer.serializeBlockInfo();
         newData = produce(data, (draft: DefaultBlockInfo) => {
           draft.type = "heading";
@@ -53,7 +53,7 @@ export class ParagraphHandler extends ABCTextHandler {
         return true;
       case ">":
       case "》":
-        dom.deleteTextBefore(this.currentContainer());
+        dom.deleteTextBefore(this.currentEditable());
         data = this.serializer.serializeBlockInfo();
         newData = produce(data, (draft: DefaultBlockInfo) => {
           draft.type = "blockquote";
@@ -72,7 +72,7 @@ export class ParagraphHandler extends ABCTextHandler {
         e.preventDefault();
         return true;
       case "1.":
-        dom.deleteTextBefore(this.currentContainer());
+        dom.deleteTextBefore(this.currentEditable());
         data = this.serializer.serializeBlockInfo();
         newData = produce(data, (draft: DefaultBlockInfo) => {
           draft.type = "orderedlist";
@@ -97,7 +97,7 @@ export class ParagraphHandler extends ABCTextHandler {
         e.preventDefault();
         return true;
       case "-":
-        dom.deleteTextBefore(this.currentContainer());
+        dom.deleteTextBefore(this.currentEditable());
         data = this.serializer.serializeBlockInfo();
         newData = produce(data, (draft: DefaultBlockInfo) => {
           draft.type = "list";

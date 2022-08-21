@@ -1,4 +1,3 @@
-import { Noticable } from "../types/noticable";
 import { Renderable } from "../types/renderable";
 import { createElement } from "../utils/contrib";
 import { ExtendInlineComponent } from "./types";
@@ -38,8 +37,6 @@ export class ABCInline<
   static elName: string = null;
   static shortcut: string = null;
 
-  static deserialize(el: HTMLLabelElement) {}
-
   constructor(props: P) {
     super();
     this.root = null;
@@ -50,31 +47,17 @@ export class ABCInline<
     } as S;
 
     this.handleClick = this.handleClick.bind(this);
-    this.render();
   }
 
-  componentDidMount(): void {}
+  rootDidMount(): void {}
 
   handleClick(e: MouseEvent) {}
 
-  renderInner(): Node[] {
-    return [];
-  }
-
-  render(): HTMLLabelElement {
-    if (!this.root) {
-      const root = createElement("label", {});
-
-      root.contentEditable = "false";
-      root.addEventListener("click", this.handleClick);
-      const inner = this.renderInner();
-      inner.forEach((c) => {
-        root.appendChild(c);
-      });
-
-      this.root = root;
-    }
-    return this.root;
+  renderRoot(): HTMLElement {
+    const root = createElement("label", {});
+    root.contentEditable = "false";
+    root.addEventListener("click", this.handleClick);
+    return root;
   }
 }
 

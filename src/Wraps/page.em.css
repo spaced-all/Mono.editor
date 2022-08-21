@@ -1,0 +1,33 @@
+
+.moe-page em {
+    font-style: normal;
+}
+
+.moe-page em.em-red {
+    background: lightcoral;
+}
+
+.moe-page em.em-blank {
+    background: black;
+}
+
+.moe-page em.em-blank:hover,
+.moe-page em.em-blank-open {
+    background: lightslategray;
+}
+
+.moe-page em.em-green {
+    background: lightgreen;
+}
+
+.moe-page em.em-blue {
+    background: lightskyblue;
+}
+
+.moe-page em.em-green {
+    background: lightgreen;
+}
+
+.moe-page em.em-yellow {
+    background: lightgoldenrodyellow;
+}

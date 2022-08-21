@@ -37,7 +37,7 @@ export class ABCTextHandler extends BlockHandler {
       };
     } else {
       this.deleteSelecte();
-      const frag = dom.extractFragmentsAfter(this.currentContainer());
+      const frag = dom.extractFragmentsAfter(this.currentEditable());
       const nodes = [];
       frag.childNodes.forEach((item) => nodes.push(item));
       const children = serializeInlineElement(dom.validChildNodes(frag));
@@ -76,7 +76,7 @@ export class ABCTextHandler extends BlockHandler {
   handleBackspaceDown(e: KeyboardEvent): boolean | void {
     console.log(["Heading", e]);
 
-    if (dom.isCursorLeft(this.currentContainer())) {
+    if (dom.isCursorLeft(this.currentEditable())) {
       e.preventDefault();
 
       if (this.serializer.blockType === "paragraph") {

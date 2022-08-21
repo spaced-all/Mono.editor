@@ -1,7 +1,13 @@
 import { InlineElement } from "../Inlines/types";
 import { BlockQuote } from "./Blockquote";
+import { Code } from "./Code";
+import { Equation } from "./Equation";
+import { Heading } from "./Heading";
+import { Image } from "./Image";
 import { List } from "./List";
+import { OrderedList } from "./OrderedList";
 import { Paragraph } from "./Paragraph";
+import { Table } from "./Table";
 
 export declare type BlockUri = string;
 export declare type OrderString = string;
@@ -56,7 +62,7 @@ export interface UnorderedListData extends ABCListData<IndentItem> {
   kind: "list";
 }
 
-export interface TableCell extends BlockData {
+export interface TableCell {
   children: InlineElement[];
   lastEditTime?: number;
 }
@@ -92,15 +98,26 @@ export interface CodeData extends BlockData {
 
 export interface ImageData extends BlockData {
   kind: "image";
-  href: string;
-  align: "left" | "center" | "right";
-  size: number; // 放缩比例，而不是原始大小
+  src: string;
+  align?: "left" | "center" | "right";
+  size?: number; // 放缩比例，而不是原始大小
+  caption?: InlineElement[];
+}
+
+export interface EquationData extends BlockData {
+  kind: "equation";
+  equation: string;
   caption?: InlineElement[];
 }
 
 type ExtendBlockKind = `@${string}`;
 export interface ExtendBlock extends BlockData {
   kind: ExtendBlockKind;
+}
+
+export interface RowBox extends BlockData {
+  kind: "rowbox";
+  children: DefaultBlockInfo;
 }
 
 export interface BlockMap {
@@ -112,8 +129,10 @@ export interface BlockMap {
   table?: TableData;
   todo?: TodoData;
   image?: ImageData;
+  equation?: EquationData;
   code?: CodeData;
   link?: LinkCardData;
+  rowbox?: RowBox;
   [key: ExtendBlockKind]: ExtendBlock;
 }
 
@@ -133,12 +152,30 @@ export type DefaultBlockInfo = BlockMap & MetaInfo;
 export interface BlockComponentTypes {
   paragraph: typeof Paragraph;
   blockquote: typeof BlockQuote;
+  heading: typeof Heading;
+
   list: typeof List;
+  orderedlist: typeof OrderedList;
+
+  table: typeof Table;
+
+  code: typeof Code;
+  image: typeof Image;
+  equation: typeof Equation;
 }
 export interface BlockComponents {
   paragraph: Paragraph;
   blockquote: BlockQuote;
+  heading: Heading;
+
   list: List;
+  orderedlist: OrderedList;
+
+  table: Table;
+
+  code: Code;
+  image: Image;
+  equation: Equation;
 }
 
 export type BlockComponentName = keyof BlockComponentTypes;

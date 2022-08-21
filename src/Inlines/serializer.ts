@@ -1,4 +1,4 @@
-import { Noticable } from "../types/noticable";
+import { Renderable } from "../types/renderable";
 import { dom } from "../utils";
 import { createElement, createTextNode } from "../utils/contrib";
 import { validChildNodes } from "../utils/dom";
@@ -71,7 +71,7 @@ export function serializeInlineElement(node: Node | Node[]): InlineElement[] {
 
 export function renderInlineElement<K extends keyof InlineElementMap>(
   item: InlineElementMap[K] | InlineElementMap[K][]
-): [Node[], Noticable[]] {
+): [Node[], Renderable[]] {
   if (!item) {
     return [[], []];
   }
@@ -79,10 +79,10 @@ export function renderInlineElement<K extends keyof InlineElementMap>(
     item = [item];
   }
 
-  const noticable: Noticable[] = [];
+  const noticable: Renderable[] = [];
   const nodes = item.map((val, ind, arr) => {
     let el: Node;
-    let subNodes, subNoticables: Noticable[];
+    let subNodes, subNoticables: Renderable[];
     let inode, inoticable;
     switch (val.kind) {
       case "#text":

@@ -673,7 +673,6 @@ export function getLineInfo(root: HTMLElement): {
 
   //   const lineNumber = Math.round(root.offsetHeight / lineHeight);
   const lineNumber = Math.round(offsetHeight / lineHeight) - 1;
-  console.log(lineNumber);
   return {
     lineNumber: lineNumber,
     lineHeight,
@@ -738,17 +737,20 @@ export function isCursorRight(
   return false;
 }
 
-export function isFirstLine(el: HTMLElement) {
+export function isFirstLine(el: HTMLElement, range?: Range) {
   if (el.childNodes.length === 0) {
     return true;
   }
-  const sel = document.getSelection();
+  if (!range) {
+    const sel = document.getSelection();
+    range = sel.getRangeAt(0);
+  }
   const test = createElement("span", {
     textContent: "|",
   });
   el.insertBefore(test, el.firstChild);
   const first = test.getClientRects();
-  sel.getRangeAt(0).insertNode(test);
+  range.insertNode(test);
   const second = test.getClientRects();
   test.remove();
   return first[0].y === second[0].y;
@@ -774,17 +776,20 @@ export function isFirstLine(el: HTMLElement) {
 //   return cpos[0].y - cpos[0].height < epos[0].y;
 // }
 
-export function isLastLine(el: HTMLElement) {
+export function isLastLine(el: HTMLElement, range?: Range) {
   if (el.childNodes.length === 0) {
     return true;
   }
-  const sel = document.getSelection();
+  if (!range) {
+    const sel = document.getSelection();
+    range = sel.getRangeAt(0);
+  }
   const test = createElement("span", {
     textContent: " ",
   });
   el.appendChild(test);
   const first = test.getClientRects();
-  sel.getRangeAt(0).insertNode(test);
+  range.insertNode(test);
   const second = test.getClientRects();
   test.remove();
   return first[0].y === second[0].y;
@@ -826,10 +831,11 @@ export function isLastLine(el: HTMLElement) {
 export function setCaretReletivePosition(
   root: HTMLElement,
   offset: number,
-  range?: Range
+  range?: Range,
+  es: boolean = true
 ) {
   if (offset < 0) {
-    offset += getContentSize(root) + 1;
+    offset += getContentSize(root, es) + 1;
     if (offset < 0) {
       offset = 0;
     }
@@ -855,7 +861,7 @@ export function setCaretReletivePosition(
     return true;
   }
   while (cur) {
-    const curOffset = elementCharSize(cur);
+    const curOffset = elementCharSize(cur, es);
     if (curOffset + historyOffset < offset) {
       cur = nextValidNode(cur, { emptyText: false });
       historyOffset += curOffset;
@@ -1021,10 +1027,10 @@ export function setPosition(
   return range;
 }
 
-export function getContentSize(el: HTMLElement) {
+export function getContentSize(el: HTMLElement, es: boolean = true) {
   let size = 0;
   el.childNodes.forEach((item) => {
-    size += elementCharSize(item);
+    size += elementCharSize(item, es);
   });
   return size;
 }
