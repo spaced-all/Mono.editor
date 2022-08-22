@@ -12,6 +12,7 @@ import { ABCBlockElement, ElementProps, ElementState } from "../aBlock";
 import { BlockHandler } from "../aBlock/handler";
 import {
   ABCListData,
+  ElementType,
   IndentItem,
   OrderedListData,
   UnorderedListData,
@@ -33,7 +34,7 @@ export class ABCList<
   P extends ABCListProps,
   S extends ABCListState
 > extends ABCBlockElement<P, S> {
-  elementType: "text" | "list" | "card" = "list";
+  elementType: ElementType = "list";
   public get data(): ABCListData<any> {
     const data = this.state.data;
     return data[data.type] as any;

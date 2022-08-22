@@ -22,6 +22,7 @@ export class ABCTextHandler extends BlockHandler {
   handleEnterDown(e: KeyboardEvent): boolean | void {
     console.log(e);
     e.preventDefault();
+    this.parent.richhint.remove();
     let newBlock: DefaultBlockInfo;
     const lastEditTime = time.getTime();
     if (e.shiftKey) {

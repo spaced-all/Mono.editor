@@ -12,7 +12,7 @@ import { HTMLElementType } from "../types/dom";
 import { Renderable } from "../types/renderable";
 import { createElement } from "../utils/contrib";
 
-import "./page.css";
+import "../styles/page.css";
 
 import { PageHandler } from "./pageHandler";
 import LinkedDict from "../struct/LinkedDict";
@@ -157,9 +157,10 @@ export class Page extends Renderable {
 
   renderRoot() {
     const root = createElement("article", {
-      className: "moe-page",
+      className: "mono-page",
       attributes: {
         contenteditable: "true",
+        tabindex: 1,
       },
       handler: this.handler,
     });

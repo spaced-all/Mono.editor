@@ -5,7 +5,7 @@ import { Renderable } from "../../types/renderable";
 import { dom, time } from "../../utils";
 
 import { createElement } from "../../utils/contrib";
-import { DefaultBlockInfo, MetaInfo, OrderString } from "../types";
+import { DefaultBlockInfo, ElementType, MetaInfo, OrderString } from "../types";
 import { BlockHandler } from "./handler";
 
 export interface SerializeMessage {
@@ -48,7 +48,7 @@ export class ABCBlockElement<
 
   static elName: string = null;
   readonly blockType: string = null;
-  elementType: "text" | "list" | "card";
+  elementType: ElementType;
 
   public get order(): OrderString {
     return this.state.data.order;
@@ -114,8 +114,8 @@ export class ABCBlockElement<
   renderRoot() {
     const root = createElement("div", {
       className: [
-        "block",
-        `block-${this.props.metaInfo.type}`,
+        "mono-block",
+        `mono-block-${this.props.metaInfo.type}`,
         this.props.className,
         this.defaultClassName,
       ]

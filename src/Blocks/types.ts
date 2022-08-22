@@ -115,11 +115,6 @@ export interface ExtendBlock extends BlockData {
   kind: ExtendBlockKind;
 }
 
-export interface RowBox extends BlockData {
-  kind: "rowbox";
-  children: DefaultBlockInfo;
-}
-
 export interface BlockMap {
   paragraph?: ParagraphData;
   heading?: HeadingData;
@@ -132,7 +127,6 @@ export interface BlockMap {
   equation?: EquationData;
   code?: CodeData;
   link?: LinkCardData;
-  rowbox?: RowBox;
   [key: ExtendBlockKind]: ExtendBlock;
 }
 
@@ -181,3 +175,8 @@ export interface BlockComponents {
 export type BlockComponentName = keyof BlockComponentTypes;
 export type BlockComponentType = BlockComponentTypes[BlockComponentName];
 export type BlockComponent = BlockComponents[BlockComponentName];
+
+export type EditableType = "content" | "element";
+export type ElementType = "text" | "list" | "card";
+
+export type WalkDirection = "next" | "prev" | "nextRow" | "prevRow";

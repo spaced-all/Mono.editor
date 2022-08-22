@@ -9,42 +9,68 @@ import { Table } from "./serializer";
 
 export class TableHandler extends BlockHandler {
   serializer: Table;
-  currentEditable(): HTMLLIElement {
-    const li = dom.findParentMatchTagName(
+
+  public get outer(): HTMLTableElement {
+    return this.serializer.outer as HTMLTableElement;
+  }
+
+  currentEditable(): HTMLTableCellElement {
+    const td = dom.findParentMatchTagName(
       document.getSelection().focusNode,
-      "li",
+      "td",
       this.serializer.outer
     );
-    return li as HTMLLIElement;
+    return td as HTMLTableCellElement;
   }
 
   prevEditable(el: HTMLElement): HTMLElement {
-    return this.prevRow(el);
-  }
-  nextEditable(el: HTMLElement): HTMLElement {
-    return this.nextRow(el);
-  }
-  prevRow(el: HTMLElement): HTMLElement {
     const prev = el.previousElementSibling as HTMLElement;
     if (prev) {
       return prev;
     } else {
+      if (el.parentElement.previousElementSibling) {
+        return el.parentElement.previousElementSibling.lastChild as HTMLElement;
+      }
       return null;
     }
   }
-  nextRow(el: HTMLElement): HTMLElement {
+  nextEditable(el: HTMLElement): HTMLElement {
     const next = el.nextElementSibling as HTMLElement;
     if (next) {
       return next;
     } else {
+      if (el.parentElement.nextElementSibling) {
+        return el.parentElement.nextElementSibling.firstChild as HTMLElement;
+      }
       return null;
     }
   }
+  prevRow(el: HTMLElement): HTMLElement {
+    const index = dom.indexOfNode(el);
+    if (el.parentElement.previousElementSibling) {
+      return el.parentElement.previousElementSibling.childNodes[
+        index
+      ] as HTMLElement;
+    }
+    return null;
+  }
+  nextRow(el: HTMLElement): HTMLElement {
+    const index = dom.indexOfNode(el);
+    if (el.parentElement.nextElementSibling) {
+      return el.parentElement.nextElementSibling.childNodes[
+        index
+      ] as HTMLElement;
+    }
+    return null;
+  }
+
   lastEditable(): HTMLElement {
-    return this.serializer.outer.querySelector("li:last-child");
+    return (this.outer.lastChild as HTMLElement).querySelector("td:last-child");
   }
   firstEditable(): HTMLElement {
-    return this.serializer.outer.querySelector("li:first-child");
+    return (this.outer.firstChild as HTMLElement).querySelector(
+      "td:first-child"
+    );
   }
 
   hasContainer() {
@@ -102,13 +128,33 @@ export class TableHandler extends BlockHandler {
   }
 
   handleBackspaceDown(e: KeyboardEvent): boolean | void {
-    return true;
+    // return true;
   }
 
   handleTabDown(e: KeyboardEvent): boolean | void {
+    e.preventDefault();
+    if (e.shiftKey) {
+      this.parent.propagateWalkEditable({
+        current: this.currentEditable(),
+        direction: "prev",
+        handler: this,
+      });
+    } else {
+      this.parent.propagateWalkEditable({
+        current: this.currentEditable(),
+        direction: "next",
+        handler: this,
+      });
+    }
     return true;
   }
   handleEnterDown(e: KeyboardEvent): boolean | void {
+    e.preventDefault();
+    this.parent.propagateWalkEditable({
+      current: this.currentEditable(),
+      direction: "nextRow",
+      handler: this,
+    });
     return true;
   }
 

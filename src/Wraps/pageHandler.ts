@@ -1,6 +1,6 @@
 import { BlockHandler } from "../Blocks/aBlock/handler";
 import { ABCListHandler } from "../Blocks/aList";
-import { DefaultBlockInfo } from "../Blocks/types";
+import { DefaultBlockInfo, EditableType, WalkDirection } from "../Blocks/types";
 import { IMath } from "../Inlines/math";
 import { renderInlineElement } from "../Inlines/serializer";
 import { CreateEvent, MergeEvent, SplitEvent } from "../operator/message";
@@ -20,6 +20,7 @@ export class PageHandler extends Handler {
   serializer: Page;
   richhint: RichHint;
   activeBlock: HTMLElement;
+  focusTarget: Range;
   constructor(serializer: Renderable) {
     super(serializer);
     this.richhint = new RichHint();
@@ -69,12 +70,22 @@ export class PageHandler extends Handler {
     return this.state.blockSerializers.nextValue().handler;
   }
 
-  activateToPrevBlock() {
-    this.state.blockSerializers.nextNode();
+  public get blockSerializers() {
+    return this.state.blockSerializers;
   }
 
-  toggleComposite(flag: boolean): void {
-    this.edit.composite = flag;
+  nextHandler(handler: BlockHandler) {
+    const next = this.blockSerializers.getNode(handler.order).next;
+    if (next) {
+      return this.blockSerializers.getValue(next.value()).handler;
+    }
+  }
+
+  prevHandler(handler: BlockHandler) {
+    const prev = this.blockSerializers.getNode(handler.order).prev;
+    if (prev) {
+      return this.blockSerializers.getValue(prev.value()).handler;
+    }
   }
 
   /**
@@ -242,6 +253,7 @@ export class PageHandler extends Handler {
       e.preventDefault();
     }
   }
+
   handleEnterDown(e: KeyboardEvent) {
     if (this.activeBlockHandler.handleEnterDown(e)) {
       return;
@@ -262,55 +274,48 @@ export class PageHandler extends Handler {
     e.preventDefault();
   }
 
-  activeNextEditable() {}
-  activePrevEditable() {}
-
   handleArrowKeyDown(e: KeyboardEvent) {
     if (this.activeBlockHandler.handleArrowKeyDown(e)) {
       return;
     }
 
-    const root = this.currentEditable();
-    if (!root) {
+    const current = this.currentEditable();
+    if (!current) {
       return;
     }
 
     if (e.key === "ArrowUp") {
-      if (dom.isFirstLine(root)) {
-        const neighbor = this.prevEditable();
-        if (neighbor) {
-          const offset = dom.getCaretReletivePosition(this.currentEditable());
-          dom.setCaretReletivePositionAtLastLine(neighbor, offset);
-        }
+      if (dom.isFirstLine(current)) {
         e.preventDefault();
-        this.richhint.autoUpdate({ root: root });
+        this.propagateWalkEditable({
+          current: current,
+          direction: "prevRow",
+          handler: this.activeBlockHandler,
+        });
       }
     } else if (e.key === "ArrowDown") {
-      if (dom.isLastLine(root)) {
-        const neighbor = this.nextEditable();
-
-        if (neighbor) {
-          // 需要考虑  container 的跳转和 block 的跳转
-          // TODO 如果挑到了不同 block，那就要判断 block 的 type 是不是 card
-          const offset = dom.getCaretReletivePosition(this.currentEditable());
-          dom.setCaretReletivePosition(neighbor, offset);
-        }
+      if (dom.isLastLine(current)) {
         e.preventDefault();
-        this.richhint.autoUpdate({ root: root });
+        this.propagateWalkEditable({
+          current: current,
+          direction: "nextRow",
+          handler: this.activeBlockHandler,
+        });
       }
     } else if (e.key === "ArrowLeft") {
       const sel = document.getSelection();
 
-      let pos = dom.previousValidPosition(root, sel.focusNode, sel.focusOffset);
+      let pos = dom.previousValidPosition(
+        current,
+        sel.focusNode,
+        sel.focusOffset
+      );
       if (!pos) {
-        const neighbor = this.prevEditable();
-        console.log(neighbor);
-        if (neighbor) {
-          dom.setCaretReletivePosition(neighbor, -1);
-        }
-        pos = this.richhint.safePosition(dom.currentPosition(neighbor));
-        dom.setPosition(pos);
-        this.richhint.autoUpdate({ root: neighbor });
+        this.propagateWalkEditable({
+          current: current,
+          direction: "prev",
+          handler: this.activeBlockHandler,
+        });
       } else {
         // change any invalid position to valid(in #text node)
         pos = this.richhint.safePosition(pos);
@@ -318,26 +323,22 @@ export class PageHandler extends Handler {
           while (pos && !dom.isTag(pos.container, "#text")) {
             pos = this.richhint.safePosition(pos);
             if (dom.isTag(pos.container, "label")) {
-              pos = dom.previousValidPosition(root, pos.container, pos.offset);
+              pos = dom.previousValidPosition(
+                current,
+                pos.container,
+                pos.offset
+              );
               break;
             }
-            pos = dom.previousValidPosition(root, pos.container, pos.offset);
+            pos = dom.previousValidPosition(current, pos.container, pos.offset);
           }
           pos = this.richhint.safePosition(pos);
-          document
-            .getSelection()
-            .setBaseAndExtent(
-              sel.anchorNode,
-              sel.anchorOffset,
-              pos.container,
-              pos.offset
-            );
-          console.log([
+          sel.setBaseAndExtent(
             sel.anchorNode,
             sel.anchorOffset,
-            sel.focusNode,
-            sel.focusOffset,
-          ]);
+            pos.container,
+            pos.offset
+          );
         } else {
           dom.setPosition(pos);
         }
@@ -351,35 +352,32 @@ export class PageHandler extends Handler {
       const sel = document.getSelection();
 
       let pos: RelPosition;
-      pos = dom.nextValidPosition(root, sel.focusNode, sel.focusOffset);
+      pos = dom.nextValidPosition(current, sel.focusNode, sel.focusOffset);
       if (!pos) {
-        const neighbor = this.nextEditable();
-        if (neighbor) {
-          dom.setCaretReletivePosition(neighbor, 0);
-        }
-        pos = this.richhint.safePosition(dom.currentPosition(neighbor));
-        this.richhint.autoUpdate({ root: neighbor });
+        this.propagateWalkEditable({
+          current: current,
+          direction: "next",
+          handler: this.activeBlockHandler,
+        });
       } else {
         pos = this.richhint.safePosition(pos);
         if (e.shiftKey) {
           while (pos && !dom.isTag(pos.container, "#text")) {
             pos = this.richhint.safePosition(pos);
             if (dom.isTag(pos.container, "label")) {
-              pos = dom.nextValidPosition(root, pos.container, pos.offset);
+              pos = dom.nextValidPosition(current, pos.container, pos.offset);
               break;
             }
-            pos = dom.nextValidPosition(root, pos.container, pos.offset);
+            pos = dom.nextValidPosition(current, pos.container, pos.offset);
           }
           pos = this.richhint.safePosition(pos);
           // dom.setPosition(pos, false, true);
-          document
-            .getSelection()
-            .setBaseAndExtent(
-              sel.anchorNode,
-              sel.anchorOffset,
-              pos.container,
-              pos.offset
-            );
+          sel.setBaseAndExtent(
+            sel.anchorNode,
+            sel.anchorOffset,
+            pos.container,
+            pos.offset
+          );
         } else {
           dom.setPosition(pos);
         }
@@ -431,7 +429,124 @@ export class PageHandler extends Handler {
     return "blocks";
   }
 
+  setFocusPosition(pos: Range) {
+    this.focusTarget = pos;
+  }
+
+  propagateWalkEditable(e: {
+    current: HTMLElement;
+    handler: BlockHandler;
+    direction: WalkDirection;
+  }) {
+    const richhint = this.richhint;
+    let { current, handler, direction } = e;
+    const currentEditableType = handler.getEditableType(current);
+    let neighbor: HTMLElement;
+    switch (direction) {
+      case "prev":
+        neighbor = handler.prevEditable(current);
+        break;
+      case "prevRow":
+        neighbor = handler.prevRow(current);
+        break;
+      case "next":
+        neighbor = handler.nextEditable(current);
+        break;
+      case "nextRow":
+        neighbor = handler.nextRow(current);
+        break;
+    }
+    const that = this;
+    function active(
+      prev: HTMLElement,
+      next: HTMLElement,
+      prevType: EditableType,
+      nextType: EditableType,
+      prevHandler: BlockHandler,
+      nextHandler: BlockHandler
+    ) {
+      let offset = 0;
+      nextHandler.activate(next);
+      if (nextType === "element") {
+        richhint.remove();
+        return;
+      }
+
+      const range = document.createRange();
+      if (prevType === "content") {
+        if (direction === "next") {
+          dom.setCaretReletivePosition(next, 0, range);
+        } else if (direction === "nextRow") {
+          offset = dom.getCaretReletivePositionAtLastLine(prev);
+          dom.setCaretReletivePosition(next, offset, range);
+        } else if (direction === "prev") {
+          dom.setCaretReletivePosition(next, -1, range);
+        } else {
+          offset = dom.getCaretReletivePosition(prev);
+          dom.setCaretReletivePositionAtLastLine(next, offset, range);
+        }
+      } else {
+        dom.setCaretReletivePosition(next, offset, range);
+      }
+
+      if (document.activeElement !== that.serializer.root) {
+        that.setFocusPosition(range);
+        that.serializer.root.focus({ preventScroll: true });
+      }
+
+      next["scrollIntoViewIfNeeded"](false);
+      dom.applyRange(range);
+      let pos = richhint.safePosition(dom.currentPosition(next));
+      dom.setPosition(pos);
+      richhint.autoUpdate({ root: next });
+    }
+
+    if (neighbor) {
+      const editableType = handler.getEditableType(neighbor);
+      if (editableType === "content") {
+      } else if (editableType === "element") {
+        handler.selectElementEditable(neighbor);
+      }
+      active(
+        current,
+        neighbor,
+        currentEditableType,
+        editableType,
+        handler,
+        handler
+      );
+      return;
+    }
+
+    let neighborHandler: BlockHandler;
+
+    if (direction.match("next")) {
+      neighborHandler = this.nextHandler(handler);
+      if (neighborHandler) {
+        neighbor = neighborHandler.firstEditable();
+      }
+    } else {
+      neighborHandler = this.prevHandler(handler);
+      if (neighborHandler) {
+        neighbor = neighborHandler.lastEditable();
+      }
+    }
+
+    if (neighbor) {
+      const editableType = neighborHandler.getEditableType(neighbor);
+      active(
+        current,
+        neighbor,
+        currentEditableType,
+        editableType,
+        handler,
+        neighborHandler
+      );
+    }
+  }
+
   processEdit(message) {}
+
   propgateChange(e: ChangeBlock) {
     const offset = dom.getCaretReletivePosition(this.currentEditable());
     const focusedSerializer = this.serializer.changeBlock(e.focus);
@@ -443,6 +558,7 @@ export class PageHandler extends Handler {
   }
 
   propgateDelete(e) {}
+
   propgateSplit(e: SplitEvent) {
     console.log(e);
     if (e.prev) {
@@ -465,27 +581,32 @@ export class PageHandler extends Handler {
   propgateNew(e: CreateEvent) {
     console.log(e);
     const newSerializer = this.serializer.insertBlockAfter(e.block, e.order);
+    const editable = newSerializer.handler.firstEditable();
     if (e.offset !== undefined) {
-      dom.setCaretReletivePosition(
-        newSerializer.handler.firstEditable(),
-        e.offset
-      );
+      dom.setCaretReletivePosition(editable, e.offset);
     }
+
+    let pos = dom.currentPosition(editable);
+    pos = this.richhint.safePosition(pos);
+    dom.setPosition(pos);
+    this.richhint.autoUpdate({ root: editable });
   }
   propgateMerge(e: MergeEvent) {
-    let neighbor: BlockHandler;
-
+    let neighborHandler: BlockHandler;
+    let neighbor: HTMLElement;
+    console.log(e);
     if (e.mergeType === "backspace") {
-      neighbor = this.prevBlockHandler;
-      const offset = dom.getContentSize(neighbor.lastEditable());
-      if (e.elementType === "text" && neighbor.elementType !== "card") {
-        neighbor.appendElementsAtLast(e.children);
+      neighborHandler = this.prevBlockHandler;
+      neighbor = neighborHandler.lastEditable();
+      const offset = dom.getContentSize(neighbor);
+      if (e.elementType === "text" && neighborHandler.elementType !== "card") {
+        neighborHandler.appendElementsAtLast(e.children);
         this.serializer.removeBlock(e.order);
-        dom.setCaretReletivePosition(neighbor.lastEditable(), offset);
-        let pos = dom.currentPosition(neighbor.lastEditable());
+        dom.setCaretReletivePosition(neighbor, offset);
+        let pos = dom.currentPosition(neighbor);
         pos = this.richhint.safePosition(pos);
         dom.setPosition(pos);
-        this.richhint.autoUpdate({ root: neighbor.lastEditable() });
+        this.richhint.autoUpdate({ root: neighbor, force: true });
       } else {
         // neighbor.elementType === 'card'
         // select neighbor
@@ -494,34 +615,36 @@ export class PageHandler extends Handler {
       const cur = this.serializer.state.blockSerializers.getValue(
         e.order
       ).handler;
-      neighbor = this.nextBlockHandler;
+      neighborHandler = this.nextBlockHandler;
       if (e.elementType === "text") {
-        cur.appendElementsAtLast(dom.validChildNodes(neighbor.firstEditable()));
-        if (neighbor.elementType === "text") {
-          this.serializer.removeBlock(neighbor.serializer.order);
-        } else if (neighbor.elementType === "list") {
-          (neighbor as ABCListHandler).removeContainer(
-            neighbor.firstEditable()
+        cur.appendElementsAtLast(
+          dom.validChildNodes(neighborHandler.firstEditable())
+        );
+        if (neighborHandler.elementType === "text") {
+          this.serializer.removeBlock(neighborHandler.serializer.order);
+        } else if (neighborHandler.elementType === "list") {
+          (neighborHandler as ABCListHandler).removeContainer(
+            neighborHandler.firstEditable()
           );
-          if (!(neighbor as ABCListHandler).hasContainer()) {
-            this.serializer.removeBlock(neighbor.serializer.order);
+          if (!(neighborHandler as ABCListHandler).hasContainer()) {
+            this.serializer.removeBlock(neighborHandler.serializer.order);
           }
         } else {
           // neighbor.elementType === 'card'
           // select neighbor
         }
-        this.richhint.autoUpdate({ root: neighbor.lastEditable() });
+        this.richhint.autoUpdate({ root: neighborHandler.lastEditable() });
       } else if (e.elementType === "list") {
-        if (neighbor.elementType === "text") {
+        if (neighborHandler.elementType === "text") {
           cur.appendElementsAtLast(
-            dom.validChildNodes(neighbor.firstEditable())
+            dom.validChildNodes(neighborHandler.firstEditable())
           );
-          this.serializer.removeBlock(neighbor.serializer.order);
-        } else if (neighbor.elementType === "list") {
-          const listNeighbor = neighbor as ABCListHandler;
+          this.serializer.removeBlock(neighborHandler.serializer.order);
+        } else if (neighborHandler.elementType === "list") {
+          const listNeighbor = neighborHandler as ABCListHandler;
           (cur as ABCListHandler).appendContainer(...listNeighbor.containers());
           if (!listNeighbor.hasContainer()) {
-            this.serializer.removeBlock(neighbor.serializer.order);
+            this.serializer.removeBlock(neighborHandler.serializer.order);
           }
         } else {
           // neighbor.elementType === 'card'
@@ -604,6 +727,18 @@ export class PageHandler extends Handler {
       return;
     }
 
+    const tgt = e.target as HTMLElement;
+
+    const tag = dom.findParentMatchTagName(tgt, "label", this.serializer.root);
+    if (tag) {
+      const { container } = this.getNodePosition(tgt);
+      let pos = dom.nextValidPosition(container, tag, 0);
+      pos = this.richhint.safePosition(pos);
+      dom.setPosition(pos);
+      this.richhint.autoUpdate({ root: container });
+      return;
+    }
+
     this.pushTypeHistory(e.key);
     if (this.tryHandleShortcut(e)) {
       e.preventDefault();
@@ -653,21 +788,22 @@ export class PageHandler extends Handler {
     } else if (e.key.match("Arrow")) {
       this.handleArrowKeyDown(e);
     } else {
-      if (e.metaKey) {
-        if (style.supportStyleKey(e.key)) {
-          style.applyStyle(e.key, this.currentEditable());
-          this.richhint.autoUpdate({
-            force: true,
-            root: this.currentEditable(),
-          });
-          e.preventDefault();
-          return;
-        }
-      }
     }
 
     if (this.activeBlockHandler.handleKeyDown(e)) {
       return;
+    }
+
+    if (e.metaKey) {
+      if (style.supportStyleKey(e.key)) {
+        style.applyStyle(e.key, this.currentEditable());
+        this.richhint.autoUpdate({
+          force: true,
+          root: this.currentEditable(),
+        });
+        e.preventDefault();
+        return;
+      }
     }
   }
   handleKeyPress(e: KeyboardEvent): boolean | void {
@@ -697,11 +833,23 @@ export class PageHandler extends Handler {
     console.log(e);
   }
   handleCopy(e: ClipboardEvent): boolean | void {}
-  handlePaste(e: ClipboardEvent): boolean | void {}
+  handlePaste(e: ClipboardEvent): boolean | void {
+    if (this.activeBlockHandler.handlePaste(e)) {
+      return;
+    }
+  }
   handleFocus(e: FocusEvent): boolean | void {
-    // console.log(e);
+    console.log(["Page Focus", e]);
+    // if (this.focusTarget) {
+    //   dom.applyRange(this.focusTarget);
+    //   const { container } = this.getNodePosition(
+    //     this.focusTarget.startContainer
+    //   );
+    //   this.richhint.autoUpdate({ root: container });
+    // }
+    // console.log(["Focus", e]);
   }
   handleBlur(e: FocusEvent): boolean | void {
-    // console.log(e);
+    console.log(["Page Blur", e]);
   }
 }

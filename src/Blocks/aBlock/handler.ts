@@ -1,13 +1,18 @@
 import { Handler } from "../../types/eventHandler";
 import { dom } from "../../utils";
 import { PageHandler } from "../../Wraps/pageHandler";
+import { EditableType, ElementType, OrderString } from "../types";
 import { ABCBlockElement, ElementProps, ElementState } from "./serializer";
 
 export class BlockHandler extends Handler {
   parent: PageHandler;
   serializer: ABCBlockElement<ElementProps, ElementState>;
 
-  public get elementType(): "text" | "list" | "card" {
+  public get order(): OrderString {
+    return this.serializer.order;
+  }
+
+  public get elementType(): ElementType {
     return this.serializer.elementType;
   }
 
@@ -18,6 +23,7 @@ export class BlockHandler extends Handler {
   currentEditable(): HTMLElement {
     return this.serializer.outer;
   }
+
   lastEditable(): HTMLElement {
     return this.serializer.outer;
   }
@@ -25,7 +31,13 @@ export class BlockHandler extends Handler {
     return this.serializer.outer;
   }
 
-  activeEditable(el: HTMLElement) {}
+  getEditableType(el: HTMLElement): EditableType {
+    return "content";
+  }
+
+  selectElementEditable(el: HTMLElement) {}
+  activeElementEditable(el: HTMLElement) {}
+
 
   getEditableByNode(node: Node): HTMLElement {
     if (dom.isParent(node, this.serializer.outer)) {

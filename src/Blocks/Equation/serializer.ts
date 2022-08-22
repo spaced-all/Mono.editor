@@ -3,7 +3,7 @@ import { InlineElement } from "../../Inlines/types";
 import { HTMLElementTagName } from "../../types/dom";
 import { createElement } from "../../utils/contrib";
 import { ABCBlockElement, ElementProps, ElementState } from "../aBlock";
-import { EquationData } from "../types";
+import { ElementType, EquationData } from "../types";
 
 import { EquationHandler } from "./handler";
 import { dom, latex } from "../../utils";
@@ -27,7 +27,7 @@ export class Equation extends ABCBlockElement<EquationProps, EquationState> {
 
   static elName: string = "equation";
   readonly blockType: string = "equation";
-  elementType: "text" | "list" | "card" = "card";
+  elementType: ElementType = "card";
 
   display: HTMLElement;
   caption: HTMLElement;

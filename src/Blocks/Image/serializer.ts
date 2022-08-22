@@ -13,7 +13,7 @@ import {
   ElementProps,
   ElementState,
 } from "../aBlock";
-import { ImageData } from "../types";
+import { ElementType, ImageData } from "../types";
 
 import { ImageHandler } from "./handler";
 import { dom } from "../../utils";
@@ -30,11 +30,10 @@ export interface ImageState extends ElementState {
   activate?: boolean;
 }
 
-// new Work
 export class Image extends ABCBlockElement<ImageProps, ImageState> {
   static elName: string = "image";
   readonly blockType: string = "image";
-  elementType: "text" | "list" | "card" = "card";
+  elementType: ElementType = "card";
 
   image: HTMLImageElement;
   caption: HTMLElement;
@@ -77,8 +76,9 @@ export class Image extends ABCBlockElement<ImageProps, ImageState> {
     const img = createElement("img");
     img.src = this.data.src;
     img.style.width = `${this.size}%`;
-    const caption = createElement("figcaption");
 
+    const caption = createElement("figcaption");
+    // caption.contentEditable = "true";
     let renderables = [];
     let nodes = [];
     if (this.data.caption) {

@@ -360,7 +360,7 @@ export class RichHint extends ABCRichHint {
     if (this.disable) {
       return;
     }
-
+    
     const { force, root, click, enter } = kwargs || {};
     const sel = document.getSelection();
     if (!sel || sel.rangeCount === 0) {

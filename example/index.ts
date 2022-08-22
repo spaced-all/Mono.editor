@@ -23,8 +23,10 @@ const page = new Page({
 
     { type: "heading", heading: headingData, order: "c" },
     { type: "list", list: listData, order: "cb" },
+    { type: "image", image: imageData, order: "cbb" },
     { type: "orderedlist", orderedlist: olData, order: "cd" },
 
+    { type: "code", code: codeData, order: "ce" },
     { type: "heading", heading: headingData, order: "d" },
     { type: "table", table: tableData, order: "db" },
 
@@ -48,4 +50,4 @@ const page2 = new Page({
   ],
 });
 
-page2.insertAfter(document.body);
+// page2.insertAfter(document.body);

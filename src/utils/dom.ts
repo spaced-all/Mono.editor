@@ -745,14 +745,20 @@ export function isFirstLine(el: HTMLElement, range?: Range) {
     const sel = document.getSelection();
     range = sel.getRangeAt(0);
   }
+
   const test = createElement("span", {
     textContent: "|",
   });
   el.insertBefore(test, el.firstChild);
   const first = test.getClientRects();
-  range.insertNode(test);
-  const second = test.getClientRects();
+
   test.remove();
+  let second = range.getClientRects();
+  if (second.length === 0) {
+    range.insertNode(test);
+    second = test.getClientRects();
+    test.remove();
+  }
   return first[0].y === second[0].y;
 }
 
@@ -789,9 +795,16 @@ export function isLastLine(el: HTMLElement, range?: Range) {
   });
   el.appendChild(test);
   const first = test.getClientRects();
-  range.insertNode(test);
-  const second = test.getClientRects();
+
   test.remove();
+  let second = range.getClientRects();
+  if (second.length === 0) {
+    // when range.container is empty node
+    range.insertNode(test);
+    second = test.getClientRects();
+    test.remove();
+  }
+
   return first[0].y === second[0].y;
 }
 // export function isLastLine(el: HTMLElement) {
@@ -928,7 +941,7 @@ export function setCaretReletivePositionAtLastLine(
 ) {
   const { lineNumber, lineHeight } = getLineInfo(root);
   if (lineNumber <= 1) {
-    return setCaretReletivePosition(root, offset);
+    return setCaretReletivePosition(root, offset, range);
   }
   if (!range) {
     range = document.createRange();
@@ -972,7 +985,11 @@ export function setCaretReletivePositionAtLastLine(
     }
   }
 }
-
+export function applyRange(range: Range) {
+  const applied = document.getSelection().getRangeAt(0);
+  applied.setStart(range.startContainer, range.startOffset);
+  applied.setEnd(range.endContainer, range.endOffset);
+}
 export function setPosition(
   pos?: RelPosition,
   start: boolean = true,

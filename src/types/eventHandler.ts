@@ -5,29 +5,42 @@ export class HandlerManager {
   static _handlers: { [key: string]: any } = {};
 }
 
+export interface ActiveEventProps {
+  related?: Handler;
+  target?: Handler;
+  relatedEditable?: HTMLElement;
+  targetEditable?: HTMLElement;
+}
+
 export class ActiveEvent {
   type: "active" | "deactive";
   related?: Handler; // 事件发生时相关的 handler
+  relatedEditable?: HTMLElement;
   target?: Handler; // 事件的目标 handler
-  static deactive(e: { related?: Handler; target?: Handler }) {
+  targetEditable?: HTMLElement; // 事件的目标 handler
+  static deactive(e: ActiveEventProps) {
     const event = new ActiveEvent();
     event.type = "deactive";
     event.related = e.related;
     event.target = e.target;
+    event.relatedEditable = e.relatedEditable;
+    event.targetEditable = e.targetEditable;
     return event;
   }
-  static active(e: { related?: Handler; target?: Handler }) {
+  static active(e: ActiveEventProps) {
     const event = new ActiveEvent();
     event.type = "active";
     event.related = e.related;
     event.target = e.target;
+    event.targetEditable = e.targetEditable;
     return event;
   }
 }
 
 export class Handler {
   private static _active: Handler = null;
-  
+  private static _activeEditable: HTMLElement = null;
+
   root: HTMLElement;
 
   parent: Handler;
@@ -66,27 +79,43 @@ export class Handler {
     this.parent = null;
   }
 
-  active() {
+  activate(editable?: HTMLElement) {
     const that = Handler._active;
+    const thatEditable = Handler._activeEditable;
     Handler._active = this;
+    Handler._activeEditable = editable;
     if (that) {
       that.handleDeactive(
-        ActiveEvent.deactive({ related: this, target: that })
+        ActiveEvent.deactive({
+          related: this,
+          relatedEditable: editable,
+          target: that,
+          targetEditable: thatEditable,
+        })
       );
     }
-    this.handleActive(ActiveEvent.active({ related: that, target: this }));
+    this.handleActive(
+      ActiveEvent.active({
+        related: that,
+        relatedEditable: thatEditable,
+        targetEditable: editable,
+        target: this,
+      })
+    );
   }
-  deactive() {
+  deactivate() {
     if (this !== Handler._active) {
       return;
     }
     Handler._active = null;
+    Handler._activeEditable = null;
     this.handleDeactive(ActiveEvent.deactive({ related: null, target: this }));
   }
 
   isActive() {
     return Handler._active === this;
   }
+
   isEditableOfRoot(el): boolean {
     return dom.findTopNode(el, this.root) === this.root;
   }

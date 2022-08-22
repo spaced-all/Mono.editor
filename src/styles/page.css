@@ -1,19 +1,22 @@
 @import url(page.em.css);
 
-.moe-page {
+.mono-page {
     cursor: text;
-    padding: 10px;
-    margin: 10px;
     transition: 200ms;
     white-space: break-spaces;
 }
 
+article.mono-page {
+    padding: 2em;
+    margin: 2em;
+    box-shadow: 0px 4px 12px rgba(0, 0, 0, 0.33);
+}
 
-.moe-page:focus {
+.mono-page:focus {
     outline: none;
 }
 
-.moe-page .bound-hint {
+.mono-page .bound-hint {
     -webkit-touch-callout: none;
     -webkit-user-select: none;
     -khtml-user-select: none;
@@ -24,17 +27,17 @@
     pointer-events: none;
 }
 
-.moe-page .bound-hint::selection {
+.mono-page .bound-hint::selection {
     color: transparent;
     /* : transparent; */
 }
 
-.moe-page>.selected {
+.mono-page>.selected {
     background-color: #f5f5f5;
 
 }
 
-.moe-page pre {
+.mono-page pre {
     width: 100%;
     margin-top: 10px;
     margin-bottom: 10px;
@@ -43,7 +46,7 @@
 
 
 
-.moe-page * {
+.mono-page * {
     outline-width: 0;
     /* margin: 0.1px; */
     /* margin: 0;
@@ -51,48 +54,48 @@
     /* margin-bottom: 8px; */
 }
 
-.moe-page p,
-.moe-page blockquote,
-.moe-page ul,
-.moe-page li,
-.moe-page ol {
+.mono-page p,
+.mono-page blockquote,
+.mono-page ul,
+.mono-page li,
+.mono-page ol {
     margin: 0;
     line-height: 1.5;
     min-height: 1.5em;
 }
 
 
-.moe-page h1 {
+.mono-page h1 {
     font-size: 2em;
     font-weight: bold;
     margin: 0em 0;
 }
 
-.moe-page h2 {
+.mono-page h2 {
     font-size: 1.8em;
     font-weight: bold;
     margin: 0em 0;
 }
 
-.moe-page h3 {
+.mono-page h3 {
     font-size: 1.6em;
     font-weight: bold;
     margin: 0em 0;
 }
 
-.moe-page h4 {
+.mono-page h4 {
     font-size: 1.4em;
     font-weight: bold;
     margin: 0em 0;
 }
 
-.moe-page h5 {
+.mono-page h5 {
     font-size: 1.2em;
     font-weight: bold;
     margin: 0em 0;
 }
 
-.moe-page pre {
+.mono-page pre {
     font-size: 14px;
     text-align: left;
     position: relative;
@@ -101,24 +104,22 @@
 
 }
 
-.moe-page pre div.line-highlight {
+.mono-page pre div.line-highlight {
     padding: 1em;
     pointer-events: none;
 }
 
-
-
-.moe-page pre div.line-highlight div {
+.mono-page pre div.line-highlight div {
     min-height: 1.5em;
 }
 
-.moe-page pre div.line-highlight div.highlight {
+.mono-page pre div.line-highlight div.highlight {
     background: rgba(140, 181, 241, 0.5);
 }
 
-.moe-page pre code,
-.moe-page pre textarea,
-.moe-page pre p {
+.mono-page pre code,
+.mono-page pre textarea.hljs,
+.mono-page pre p {
     font-size: inherit;
     font-family: "Fira code", "Fira Mono", monospace;
     font-style: inherit;
@@ -130,7 +131,7 @@
     letter-spacing: inherit;
 }
 
-.moe-page pre code {
+.mono-page pre code {
     background: transparent;
     display: block;
     pointer-events: none;
@@ -142,18 +143,8 @@
     top: 0;
 }
 
-.moe-page pre div.line-highlight {
-    /* background: transparent; */
-    /* display: block; */
-    /* pointer-events: none; */
-    /* width: 100%;
-    height: 100%;
-    position: absolute;
-    top: 0; */
-}
-
-.moe-page pre textarea,
-.moe-page pre p {
+.mono-page pre textarea.hljs,
+.mono-page pre p {
 
     top: 0;
 
@@ -179,68 +170,64 @@
 
 
 
-.moe-page ul,
-.moe-page ol {
+.mono-page ul,
+.mono-page ol {
     padding-top: 0.5em;
     padding-bottom: 0.5em;
 }
 
-.moe-page ul:global(.task-list) li input:first-child {
+.mono-page ul:global(.task-list) li input:first-child {
     margin-right: 0.5em;
 }
 
-.moe-page ul:global(.task-list) li p {
+.mono-page ul:global(.task-list) li p {
     display: inline;
 }
 
 
-
-.moe-page blockquote {
+.mono-page blockquote {
     border-left: 0.3em solid #ccc;
-    /* border-top: 0.3em solid white;
-    border-bottom: 0.3em solid white; */
-
     padding-left: 0.5em;
 }
 
-.moe-page li:global(.list-indent-1) {
+.mono-page li:global(.list-indent-1) {
     margin-left: 0em;
 }
 
-.moe-page li:global(.list-indent-2) {
+.mono-page li:global(.list-indent-2) {
     margin-left: 1em;
 }
 
-.moe-page li:global(.list-indent-3) {
+.mono-page li:global(.list-indent-3) {
     margin-left: 2em;
 }
 
 
 
-.moe-page :global(.selection-board) {
+.mono-page :global(.selection-board) {
     display: flex;
     align-items: center;
 }
 
-.moe-page :global(.selection-board) * {
+.mono-page :global(.selection-board) * {
     margin-right: 20px;
 }
 
 
-.moe-page>:global(.block-selected) {
+.mono-page>:global(.block-selected) {
     background-color: antiquewhite;
     transition: 200ms;
 }
 
-.moe-page:global(.block-selection-mode) ::selection {
+.mono-page:global(.block-selection-mode) ::selection {
     background-color: transparent;
 }
 
-.moe-page:global(.block-selection-mode) {
+.mono-page:global(.block-selection-mode) {
     caret-color: transparent;
 }
 
-.moe-page div.active :empty:after {
+.mono-page div.active :empty:after {
     /* padding-left: 1px; */
     content: attr(data-placeholder);
     color: #aaa;
@@ -249,16 +236,16 @@
 /**
 * table part
 */
-.moe-page table {
+.mono-page table {
     width: 100%;
 }
 
-.moe-page table {
+.mono-page table {
     border-spacing: 0;
     padding: 20px 0
 }
 
-.moe-page table td {
+.mono-page table td {
     text-align: center;
 
     /* border-bottom: 2px solid #dddddd; */
@@ -266,7 +253,7 @@
     padding: 8px;
 }
 
-.moe-page tbody tr td {
+.mono-page tbody tr td {
     /* margin: auto; */
     /* border-bottom: 2px solid #dddddd; */
     border-top: 1px solid #dddddd;
@@ -276,15 +263,15 @@
     padding: 8px;
 }
 
-.moe-page td:empty::after {
+.mono-page td:empty::after {
     /* to avoid collapsed, see https://stackoverflow.com/a/66443442/11185460 */
     content: "\00a0";
     visibility: hidden;
 }
 
 
-.moe-page label.label-keyboard-hover .display-math,
-.moe-page label .display-math:hover {
+.mono-page label.label-keyboard-hover .display-math,
+.mono-page label .display-math:hover {
     background-color: lightblue;
 }
 

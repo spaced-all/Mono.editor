@@ -1,33 +1,33 @@
 
-.moe-page em {
+.mono-page em {
     font-style: normal;
 }
 
-.moe-page em.em-red {
+.mono-page em.em-red {
     background: lightcoral;
 }
 
-.moe-page em.em-blank {
+.mono-page em.em-blank {
     background: black;
 }
 
-.moe-page em.em-blank:hover,
-.moe-page em.em-blank-open {
+.mono-page em.em-blank:hover,
+.mono-page em.em-blank-open {
     background: lightslategray;
 }
 
-.moe-page em.em-green {
+.mono-page em.em-green {
     background: lightgreen;
 }
 
-.moe-page em.em-blue {
+.mono-page em.em-blue {
     background: lightskyblue;
 }
 
-.moe-page em.em-green {
+.mono-page em.em-green {
     background: lightgreen;
 }
 
-.moe-page em.em-yellow {
+.mono-page em.em-yellow {
     background: lightgoldenrodyellow;
 }

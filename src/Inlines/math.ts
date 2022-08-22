@@ -79,6 +79,7 @@ export class IMath extends ABCInline<MathProps, MathState> {
     this.from = e.relatedTarget as HTMLElement;
   }
   handleBlur(e: FocusEvent) {
+    console.log(["Math blur", e]);
     if (this.input.value.trim() === "") {
       this.root.remove();
     } else {
@@ -126,9 +127,9 @@ export class IMath extends ABCInline<MathProps, MathState> {
   handleKeyDown(e: KeyboardEvent) {
     if (e.key === "Escape") {
       e.preventDefault();
-      latex.generateHTML(this.math, this.span);
-      expandWidth(this.span, this.space);
-      this.from.focus();
+      // latex.generateHTML(this.math, this.span);
+      // expandWidth(this.span, this.space);
+      this.input.blur();
       return;
     }
     e.stopPropagation();

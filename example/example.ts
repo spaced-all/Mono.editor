@@ -92,7 +92,10 @@ export const olData: OrderedListData = {
 export const tableData: TableData = {
   kind: "table",
 
-  items: [[{ children: [bi, bold] }], [{ children: [bi, bold] }]],
+  items: [
+    [{ children: [bi, bold] }, { children: [bi, bold] }],
+    [{ children: [bi, bold] }, { children: [bi, bold] }],
+  ],
 };
 
 export const codeData: CodeData = {

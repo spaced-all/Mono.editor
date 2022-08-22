@@ -8,7 +8,7 @@ import { InlineElement } from "../../Inlines/types";
 import { HTMLElementTagName } from "../../types/dom";
 import { createElement } from "../../utils/contrib";
 import { ABCBlockElement, ElementProps, ElementState } from "../aBlock";
-import { CodeData } from "../types";
+import { CodeData, ElementType } from "../types";
 
 import hljs from "highlight.js";
 import "highlight.js/styles/github.css";
@@ -35,8 +35,9 @@ export class Code extends ABCBlockElement<CodeProps, CodeState> {
 
   static elName: string = "code";
   readonly blockType: string = "code";
-  elementType: "text" | "list" | "card" = "card";
+  elementType: ElementType = "card";
 
+  handler: CodeHandler;
   display: HTMLElement;
   edit: HTMLTextAreaElement;
   highlight: HTMLElement;
@@ -66,22 +67,29 @@ export class Code extends ABCBlockElement<CodeProps, CodeState> {
   }
 
   updateCode(code, language = "javascript") {
+    // return;
     let rcode = code;
     // make sure new line has height
     if (rcode[rcode.length - 1] == "\n") {
       rcode += " ";
     }
+
+    const updateLine =
+      this.display.textContent.split("\n").length !== rcode.split("\n").length;
     this.display.innerHTML = rcode;
     hljs.highlightElement(this.display);
 
     if (this.edit.value !== code) {
       this.edit.value = code;
     }
+    if (updateLine) {
+      this.updateLine();
+    }
   }
 
-  updateLineHighlight(...line: number[]) {
+  updateLine() {
+    // return;
     const { lineNumber } = dom.getLineInfo(this.display);
-
     while (this.highlight.childNodes.length > lineNumber) {
       this.highlight.lastChild.remove();
     }
@@ -89,6 +97,11 @@ export class Code extends ABCBlockElement<CodeProps, CodeState> {
     while (this.highlight.childNodes.length < lineNumber) {
       this.highlight.appendChild(createElement("div", {}));
     }
+  }
+
+  updateLineHighlight(...line: number[]) {
+    // return;
+    this.updateLine();
     const oldLine = this.highlight.getAttribute("data-line");
     if (oldLine) {
       oldLine
@@ -116,6 +129,16 @@ export class Code extends ABCBlockElement<CodeProps, CodeState> {
     this.updateCode(code);
   }
 
+  handleEditBlur(e: FocusEvent) {
+    console.log(["Textarea Blur", e]);
+    // this.edit.style.display = "none";
+    e.stopPropagation();
+    e.preventDefault();
+  }
+  handleEditFocus(e: FocusEvent) {
+    console.log(["Textarea Focus", e]);
+  }
+
   renderInner(): [Node[], Renderable[]] {
     this.display = createElement("code", {
       className: "language-javascript language-css",
@@ -127,13 +150,20 @@ export class Code extends ABCBlockElement<CodeProps, CodeState> {
       className: "hljs",
       eventHandler: {
         input: this.handleEditInput.bind(this),
+        blur: this.handleEditBlur.bind(this),
+        focus: this.handleEditFocus.bind(this),
+        keydown: this.handler.handleEditArrowKeyDown.bind(this.handler),
+        keyup: this.handler.handleEditArrowKeyUp.bind(this.handler),
       },
     });
+    // this.edit.style.display = "none";
 
-    this.outer.setAttribute("data-line", "1");
+    this.outer.contentEditable = "false";
+
     // return [this.highlight, this.display, this.edit];
     // 为了便于选中 display ，display 必需在最上层，而且不能有 position: absolute
     return [[this.display, this.highlight, this.edit], []];
+    // return [[this.edit], []];
     // return [];
   }
 }

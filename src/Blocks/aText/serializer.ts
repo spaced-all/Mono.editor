@@ -9,7 +9,7 @@ import { dom, time } from "../../utils";
 import { createElement } from "../../utils/contrib";
 import { ABCBlockElement, ElementProps, ElementState } from "../aBlock";
 import { BlockHandler } from "../aBlock/handler";
-import { TextContent } from "../types";
+import { ElementType, TextContent } from "../types";
 import { ABCTextHandler } from "./handler";
 
 export interface SerializeMessage {
@@ -27,7 +27,7 @@ export class ABCText<
   P extends ABCTextProps,
   S extends ABCTextState
 > extends ABCBlockElement<P, S> {
-  elementType: "text" | "list" | "card" = "text";
+  elementType: ElementType = "text";
   public get data(): TextContent {
     const data = this.state.data;
     return data[data.type] as TextContent;
