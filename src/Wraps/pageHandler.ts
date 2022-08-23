@@ -10,7 +10,7 @@ import {
   SplitBlock,
   TextFormat,
 } from "../operator/types";
-import { Handler } from "../types/eventHandler";
+import { ActiveEvent, Handler } from "../types/eventHandler";
 import { Renderable } from "../types/renderable";
 import { dom, pos, style } from "../utils";
 import { RichHint } from "../utils/richhint";
@@ -19,7 +19,7 @@ import { EditState, Page, PageProps, PageState } from "./Page";
 export class PageHandler extends Handler {
   serializer: Page;
   richhint: RichHint;
-  activeBlock: HTMLElement;
+  // activeBlock: HTMLElement;
   focusTarget: Range;
   constructor(serializer: Renderable) {
     super(serializer);
@@ -144,26 +144,39 @@ export class PageHandler extends Handler {
 
   handleMouseDown(e: MouseEvent): void {
     console.log(["page Mouse Down", e]);
-    this.updateActiveBlock(
-      this.getNodeHandler(e.target as HTMLElement).serializer.root
+
+    const { handler, editable, order } = this.getNodePosition(
+      e.target as HTMLElement
     );
-    if (this.getNodeHandler(e.target as Node).handleMouseDown(e)) {
+
+    if (handler) {
+      const eventData = handler.activate(editable);
+      this.handleBlockActivate(eventData);
+      const nextType = handler.getEditableType(editable);
+      if (nextType === "element") {
+        this.richhint.remove();
+        return;
+      }
+    }
+
+    // this.updateActiveBlock(
+    //   this.getNodeHandler(e.target as HTMLElement).serializer.root
+    // );
+    if (handler.handleMouseDown(e)) {
       return;
     }
   }
 
-  updateActiveBlock(el) {
-    console.log(el);
-    if (this.activeBlock !== el) {
-      if (this.activeBlock) {
-        this.activeBlock.classList.remove("active");
-      }
-      if (this.activeBlockRootElement) {
-        this.activeBlock = el;
-        this.activeBlock.classList.add("active");
-      }
+  handleBlockActivate(e: ActiveEvent) {
+    const { target, targetEditable, related, relatedEditable } = e;
+    if (related) {
+      related.root.classList.remove("active");
+    }
+    if (target) {
+      target.root.classList.add("active");
     }
   }
+
   handleMouseUp(e: MouseEvent): void {
     if (this.activeBlockHandler.handleMouseUp(e)) {
       return;
@@ -395,11 +408,11 @@ export class PageHandler extends Handler {
     );
     if (blockRoot && blockRoot.hasAttribute("block")) {
       const order = blockRoot.getAttribute("data-order");
-      const container = this.state.blockSerializers
-        .getValue(order)
-        .handler.getEditableByNode(node);
+      const handler = this.blockSerializers.getValue(order).handler;
+      const editable = handler.getEditableByNode(node);
       return {
-        container: container,
+        handler: handler,
+        editable: editable,
         order: order,
       };
     }
@@ -420,7 +433,7 @@ export class PageHandler extends Handler {
     if (!start.order || !end.order) {
       return "blur";
     }
-    if (start.container === end.container) {
+    if (start.editable === end.editable) {
       return "inContainer";
     }
     if (start.order === end.order) {
@@ -466,7 +479,8 @@ export class PageHandler extends Handler {
       nextHandler: BlockHandler
     ) {
       let offset = 0;
-      nextHandler.activate(next);
+      const activateEvent = nextHandler.activate(next);
+      that.handleBlockActivate(activateEvent);
       if (nextType === "element") {
         richhint.remove();
         return;
@@ -731,7 +745,7 @@ export class PageHandler extends Handler {
 
     const tag = dom.findParentMatchTagName(tgt, "label", this.serializer.root);
     if (tag) {
-      const { container } = this.getNodePosition(tgt);
+      const { editable: container } = this.getNodePosition(tgt);
       let pos = dom.nextValidPosition(container, tag, 0);
       pos = this.richhint.safePosition(pos);
       dom.setPosition(pos);
@@ -811,7 +825,7 @@ export class PageHandler extends Handler {
 
     const tag = dom.findParentMatchTagName(tgt, "label", this.serializer.root);
     if (tag) {
-      const { container } = this.getNodePosition(tgt);
+      const { editable: container } = this.getNodePosition(tgt);
       let pos = dom.nextValidPosition(container, tag, 0);
       pos = this.richhint.safePosition(pos);
       dom.setPosition(pos);

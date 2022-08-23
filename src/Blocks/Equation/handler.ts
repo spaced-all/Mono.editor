@@ -74,6 +74,7 @@ export class EquationHandler extends BlockHandler {
   firstEditable(): HTMLElement {
     return this.display;
   }
+  
   lastEditable(): HTMLElement {
     return this.caption;
   }

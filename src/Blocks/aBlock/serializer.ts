@@ -74,6 +74,10 @@ export class ABCBlockElement<
     return BlockHandler;
   }
 
+  updateData(data) {
+    this.state.data[this.state.data.type] = data;
+  }
+
   serialize() {}
 
   serializeBlockInfo(): DefaultBlockInfo {

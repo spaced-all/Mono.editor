@@ -18,6 +18,7 @@ import { ElementType, ImageData } from "../types";
 import { ImageHandler } from "./handler";
 import { dom } from "../../utils";
 import { Renderable } from "../../types/renderable";
+import produce from "immer";
 
 export interface SerializeMessage {
   insert?: boolean;
@@ -58,15 +59,34 @@ export class Image extends ABCBlockElement<ImageProps, ImageState> {
     return this.data.size || 100;
   }
 
-  public set size(v: number) {
-    this.data.size = v;
-    Math.min(Math.max(v, 10), 100);
-    this.image.style.width = `${v}%`;
-  }
-
   childrenDidMount(): void {}
 
-  updateImage(src) {}
+  bigger() {
+    this.updateImage(null, this.size + 10);
+  }
+  smaller() {
+    this.updateImage(null, this.size - 10);
+  }
+
+  updateImage(src?: string, size?: number) {
+    if (src) {
+      this.image.src = src;
+    }
+    if (size) {
+      size = Math.min(Math.max(size, 10), 100);
+      this.image.style.width = `${size}%`;
+    }
+
+    const newData = produce(this.data, (draft) => {
+      if (src) {
+        draft.src = src;
+      }
+      if (size) {
+        draft.size = size;
+      }
+    });
+    this.updateData(newData);
+  }
 
   public get handlerType(): typeof ImageHandler {
     return ImageHandler;

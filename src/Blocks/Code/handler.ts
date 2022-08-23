@@ -32,12 +32,7 @@ export class CodeHandler extends BlockHandler {
   currentEditable(): HTMLElement {
     return this.edit;
   }
-  // selectElementEditable(el: HTMLElement): void {
-  //   console.log("select element editable");
-  //   if (el === this.edit) {
-  //     // this.edit.style.display = "unset";
-  //   }
-  // }
+
   handleActive(e: ActiveEvent): boolean | void {
     if (e.targetEditable === this.edit) {
       this.edit.focus();
@@ -132,7 +127,7 @@ export class CodeHandler extends BlockHandler {
     return true;
   }
   getEditableType(el: HTMLElement): EditableType {
-    if (el === this.edit) {
+    if (el === this.edit || el === this.serializer.outer) {
       return "element";
     } else {
       return "content";

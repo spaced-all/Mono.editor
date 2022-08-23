@@ -41,7 +41,9 @@ export class Handler {
   private static _active: Handler = null;
   private static _activeEditable: HTMLElement = null;
 
-  root: HTMLElement;
+  public get root(): HTMLElement {
+    return this.serializer.root;
+  }
 
   parent: Handler;
   serializer: Renderable;
@@ -94,14 +96,14 @@ export class Handler {
         })
       );
     }
-    this.handleActive(
-      ActiveEvent.active({
-        related: that,
-        relatedEditable: thatEditable,
-        targetEditable: editable,
-        target: this,
-      })
-    );
+    const eventData = ActiveEvent.active({
+      related: that,
+      relatedEditable: thatEditable,
+      targetEditable: editable,
+      target: this,
+    });
+    this.handleActive(eventData);
+    return eventData;
   }
   deactivate() {
     if (this !== Handler._active) {
@@ -109,7 +111,9 @@ export class Handler {
     }
     Handler._active = null;
     Handler._activeEditable = null;
-    this.handleDeactive(ActiveEvent.deactive({ related: null, target: this }));
+    const eventData = ActiveEvent.deactive({ related: null, target: this });
+    this.handleDeactive(eventData);
+    return eventData;
   }
 
   isActive() {

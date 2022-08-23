@@ -9,7 +9,28 @@ import { EditableType } from "../types";
 
 export class ImageHandler extends BlockHandler {
   serializer: Image;
+
+  public get image(): HTMLImageElement {
+    return this.serializer.image;
+  }
+
+  public get caption(): HTMLElement {
+    return this.serializer.caption;
+  }
+
+
+  getEditableByNode(node: Node): HTMLElement {
+    if (dom.isParent(node, this.image)) {
+      return this.image;
+    }
+    if (dom.isParent(node, this.caption)) {
+      return this.caption;
+    }
+    return null;
+  }
+
   handleActive(e: ActiveEvent): boolean | void {
+    console.log(["Image Active", e]);
     const el = e.targetEditable;
     if (el === this.serializer.image) {
       el.style.opacity = "0.5";
@@ -76,11 +97,17 @@ export class ImageHandler extends BlockHandler {
 
   handleMouseDown(e: MouseEvent): boolean | void {
     // e.preventDefault();
+    if (this.currentEditable() === this.serializer.caption) {
+      return false;
+    }
     console.log(["Image", e]);
     return true;
   }
 
   handleMouseUp(e: MouseEvent): boolean | void {
+    if (this.currentEditable() === this.serializer.caption) {
+      return false;
+    }
     console.log(["Image", e]);
     return true;
   }
@@ -114,40 +141,46 @@ export class ImageHandler extends BlockHandler {
     }
     console.log(["ImageDown", e]);
     e.preventDefault();
-    // if (e.key === "Enter") {
-    //   // document.createElement("br");
-    //   const newLine = document.createTextNode("\n");
-    //   document.getSelection().getRangeAt(0).insertNode(newLine);
-    //   document.getSelection().setPosition(newLine, 1);
-    //   this.serializer.updateImage(this.serializer.outer.innerHTML);
-    //   e.preventDefault();
-    // } else if (e.key === "Backspace") {
-    //   if (this.isCursorLeft()) {
-    //     e.preventDefault();
-    //   }
-    // } else if (e.key.match("Arrow")) {
-    //   this.handleArrowKeyDown(e);
-    // }
+ 
+    switch (e.key) {
+      case "[":
+        this.serializer.smaller();
+        break;
+      case "]":
+        this.serializer.bigger();
+        break;
+    }
 
     return true;
   }
   handleKeyUp(e: KeyboardEvent): boolean | void {
     // e.preventDefault();
+    if (this.currentEditable() === this.serializer.caption) {
+      return false;
+    }
     console.log(["ImageUp", e]);
     e.preventDefault();
     return true;
   }
   handleKeyPress(e: KeyboardEvent): boolean | void {
     // e.preventDefault();
-
+    if (this.currentEditable() === this.serializer.caption) {
+      return false;
+    }
     console.log(["ImagePress", e]);
     return true;
   }
   handleInput(e: Event): boolean | void {
+    if (this.currentEditable() === this.serializer.caption) {
+      return false;
+    }
     // this.serializer.updateImage(this.serializer.outer.innerHTML);
     return true;
   }
   handleEnterDown(e: KeyboardEvent): boolean | void {
+    if (this.currentEditable() === this.serializer.caption) {
+      return false;
+    }
     return true;
   }
 }
