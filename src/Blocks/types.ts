@@ -179,4 +179,4 @@ export type BlockComponent = BlockComponents[BlockComponentName];
 export type EditableType = "content" | "element";
 export type ElementType = "text" | "list" | "card";
 
-export type WalkDirection = "next" | "prev" | "nextRow" | "prevRow";
+export type WalkDirection = "next" | "prev" | "nextRow" | "prevRow" | "self";

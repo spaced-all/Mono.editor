@@ -104,7 +104,7 @@ export class CodeHandler extends BlockHandler {
     if (e.key === "ArrowUp" && this.edit.selectionStart === 0) {
       e.preventDefault();
       // this.edit.blur();
-      this.parent.propagateWalkEditable({
+      this.parent.requestActivateEditable({
         current: this.edit,
         direction: "prevRow",
         handler: this,
@@ -115,7 +115,7 @@ export class CodeHandler extends BlockHandler {
     ) {
       e.preventDefault();
       // this.edit.blur();
-      this.parent.propagateWalkEditable({
+      this.parent.requestActivateEditable({
         current: this.edit,
         direction: "nextRow",
         handler: this,

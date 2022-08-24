@@ -18,6 +18,10 @@ export class EquationHandler extends BlockHandler {
     return this.serializer.caption;
   }
 
+  public get edit(): HTMLTextAreaElement {
+    return this.serializer.edit;
+  }
+
   handleActive(e: ActiveEvent): boolean | void {
     const el = e.targetEditable;
     if (el === this.display) {
@@ -28,20 +32,10 @@ export class EquationHandler extends BlockHandler {
   handleDeactive(e: ActiveEvent): boolean | void {
     const el = e.targetEditable;
     if (el === this.display) {
-      el.style.opacity = "unset";
+      el.style.opacity = null;
       // document.getSelection().setPosition(el, 0);
     }
-  }
-
-  currentEditable(): HTMLElement {
-    const node = document.getSelection().focusNode;
-    if (node === this.display) {
-      return node as HTMLElement;
-    }
-    if (dom.isParent(node, this.caption)) {
-      return this.serializer.caption;
-    }
-    return null;
+    this.serializer.closeEdit();
   }
 
   nextEditable(el: HTMLElement): HTMLElement {
@@ -65,6 +59,15 @@ export class EquationHandler extends BlockHandler {
     return this.prevEditable(el);
   }
 
+  getEditableByNode(node: Node): HTMLElement {
+    if (dom.isParent(node, this.display)) {
+      return this.display as HTMLElement;
+    }
+    if (dom.isParent(node, this.caption)) {
+      return this.caption;
+    }
+    return null;
+  }
   getEditableType(el: HTMLElement): EditableType {
     if (el === this.display) {
       return "element";
@@ -74,7 +77,7 @@ export class EquationHandler extends BlockHandler {
   firstEditable(): HTMLElement {
     return this.display;
   }
-  
+
   lastEditable(): HTMLElement {
     return this.caption;
   }
@@ -82,27 +85,44 @@ export class EquationHandler extends BlockHandler {
   handleMouseDown(e: MouseEvent): boolean | void {
     // e.preventDefault();
     console.log(["Equation", e]);
+    if (this.currentEditable() === this.caption) {
+      return false;
+    }
+    if (dom.isParent(e.target as Node, this.display)) {
+      return false;
+    }
     return true;
   }
 
   handleMouseUp(e: MouseEvent): boolean | void {
     console.log(["Equation", e]);
+    if (this.currentEditable() === this.caption) {
+      return false;
+    }
+    if (dom.isParent(e.target as Node, this.display)) {
+      return false;
+    }
     return true;
   }
   handleArrowKeyDown(e: KeyboardEvent): boolean | void {
     if (this.currentEditable() === this.caption) {
       return false;
     }
+
+    if (e.target === this.edit) {
+      return false;
+    }
+
     if (e.key === "ArrowUp") {
       e.preventDefault();
-      this.parent.propagateWalkEditable({
+      this.parent.requestActivateEditable({
         current: this.display,
         direction: "prevRow",
         handler: this,
       });
     } else if (e.key === "ArrowDown") {
       e.preventDefault();
-      this.parent.propagateWalkEditable({
+      this.parent.requestActivateEditable({
         current: this.display,
         direction: "nextRow",
         handler: this,
@@ -114,22 +134,10 @@ export class EquationHandler extends BlockHandler {
   handleKeyDown(e: KeyboardEvent): boolean | void {
     // e.preventDefault();
     console.log(["EquationDown", e]);
-
-    // if (e.key === "Enter") {
-    //   // document.createElement("br");
-    //   const newLine = document.createTextNode("\n");
-    //   document.getSelection().getRangeAt(0).insertNode(newLine);
-    //   document.getSelection().setPosition(newLine, 1);
-    //   this.serializer.updateEquation(this.serializer.outer.innerHTML);
-    //   e.preventDefault();
-    // } else if (e.key === "Backspace") {
-    //   if (this.isCursorLeft()) {
-    //     e.preventDefault();
-    //   }
-    // } else if (e.key.match("Arrow")) {
-    //   this.handleArrowKeyDown(e);
-    // }
-
+    if (this.currentEditable() === this.display) {
+      e.preventDefault();
+      return true;
+    }
     return true;
   }
   handleKeyUp(e: KeyboardEvent): boolean | void {
@@ -145,10 +153,41 @@ export class EquationHandler extends BlockHandler {
     return true;
   }
   handleInput(e: Event): boolean | void {
+    console.log(["Equation input", e]);
+    if (e.target === this.edit) {
+      this.serializer.updateEquation(this.edit.value);
+    }
     // this.serializer.updateEquation(this.serializer.outer.innerHTML);
     return true;
   }
   handleEnterDown(e: KeyboardEvent): boolean | void {
+    if (this.currentEditable() === this.caption) {
+      return false;
+    }
+    if (e.target === this.edit) {
+      if (e.shiftKey) {
+        this.parent.requestActivateEditable({
+          current: this.display,
+          direction: "self",
+          handler: this,
+        });
+        e.preventDefault();
+      }
+    } else {
+      this.serializer.showEdit();
+      e.preventDefault();
+    }
     return true;
+  }
+  handleEscapeDown(e: KeyboardEvent): boolean | void {
+    console.log(["Equation Escape", e]);
+    if (e.target === this.edit) {
+      this.parent.requestActivateEditable({
+        current: this.display,
+        direction: "self",
+        handler: this,
+      });
+      e.preventDefault();
+    }
   }
 }

@@ -21,32 +21,72 @@ export class BlockHandler extends Handler {
   }
 
   currentEditable(): HTMLElement {
-    return this.serializer.outer;
+    const node = document.getSelection().focusNode;
+    return this.getEditableByNode(node);
   }
 
+  /** */
+  /**
+   *
+   * @returns get last editable item in this block
+   */
   lastEditable(): HTMLElement {
     return this.serializer.outer;
   }
+  /**
+   *
+   * @returns get first editable item in this block
+   */
   firstEditable(): HTMLElement {
     return this.serializer.outer;
   }
 
-  getEditableType(el: HTMLElement): EditableType {
-    return "content";
+  /**
+   * @param el An editable item in this block.
+   *  Use getEditableByNode(el) to find editable parent of children node.
+   * @returns get next editable item after el
+   *  For Text block, there is not next editable
+   *  For List block, nextEditable is equal with nextRow
+   *  For Table block, nextEditable of el is the neighbor table cell
+   *  For Card block, define as you like.
+   */
+  nextEditable(el: HTMLElement): HTMLElement {
+    if (this.serializer.outer === el) {
+      return null;
+    }
   }
-
-  selectElementEditable(el: HTMLElement) {}
-  activeElementEditable(el: HTMLElement) {}
-
-
+  /**
+   * Get previous editable item before el.
+   */
+  prevEditable(el: HTMLElement): HTMLElement {
+    if (this.serializer.outer === el) {
+      return null;
+    }
+  }
+  /**
+   *
+   * @param el
+   * @returns
+   */
+  prevRow(el: HTMLElement): HTMLElement {
+    return this.prevEditable(el);
+  }
+  nextRow(el: HTMLElement): HTMLElement {
+    return this.nextEditable(el);
+  }
+  
+  getEditableByIndex(...index: number[]): HTMLElement {
+    return this.serializer.outer;
+  }
   getEditableByNode(node: Node): HTMLElement {
     if (dom.isParent(node, this.serializer.outer)) {
       return this.serializer.outer;
     }
     return null;
   }
-
-  handleTabDown(e: KeyboardEvent): boolean | void {}
+  getEditableType(el: HTMLElement): EditableType {
+    return "content";
+  }
 
   isCursorLeft() {
     return dom.isCursorLeft(this.currentEditable());

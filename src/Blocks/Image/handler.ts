@@ -18,6 +18,9 @@ export class ImageHandler extends BlockHandler {
     return this.serializer.caption;
   }
 
+  public get input(): HTMLInputElement {
+    return this.serializer.input;
+  }
 
   getEditableByNode(node: Node): HTMLElement {
     if (dom.isParent(node, this.image)) {
@@ -44,6 +47,7 @@ export class ImageHandler extends BlockHandler {
       el.style.opacity = "unset";
       // document.getSelection().setPosition(el, 0);
     }
+    this.serializer.closeInput()
   }
 
   currentEditable(): HTMLElement {
@@ -100,12 +104,18 @@ export class ImageHandler extends BlockHandler {
     if (this.currentEditable() === this.serializer.caption) {
       return false;
     }
+    if (dom.isParent(e.target as Node, this.image)) {
+      return false;
+    }
     console.log(["Image", e]);
     return true;
   }
 
   handleMouseUp(e: MouseEvent): boolean | void {
     if (this.currentEditable() === this.serializer.caption) {
+      return false;
+    }
+    if (dom.isParent(e.target as Node, this.image)) {
       return false;
     }
     console.log(["Image", e]);
@@ -118,14 +128,14 @@ export class ImageHandler extends BlockHandler {
 
     if (e.key === "ArrowUp") {
       e.preventDefault();
-      this.parent.propagateWalkEditable({
+      this.parent.requestActivateEditable({
         current: this.serializer.image,
         direction: "prevRow",
         handler: this,
       });
     } else if (e.key === "ArrowDown") {
       e.preventDefault();
-      this.parent.propagateWalkEditable({
+      this.parent.requestActivateEditable({
         current: this.serializer.image,
         direction: "nextRow",
         handler: this,
@@ -139,14 +149,16 @@ export class ImageHandler extends BlockHandler {
     if (this.currentEditable() === this.serializer.caption) {
       return false;
     }
-    console.log(["ImageDown", e]);
-    e.preventDefault();
- 
+    // console.log(["ImageDown", e]);
+    // e.preventDefault();
+
     switch (e.key) {
       case "[":
+        e.preventDefault()
         this.serializer.smaller();
         break;
       case "]":
+        e.preventDefault()
         this.serializer.bigger();
         break;
     }
@@ -180,6 +192,16 @@ export class ImageHandler extends BlockHandler {
   handleEnterDown(e: KeyboardEvent): boolean | void {
     if (this.currentEditable() === this.serializer.caption) {
       return false;
+    }
+    if (e.target === this.input) {
+      this.parent.requestActivateEditable({
+        current: this.image,
+        direction: "self",
+        handler: this,
+      });
+      e.preventDefault();
+    } else {
+      this.serializer.showInput();
     }
     return true;
   }

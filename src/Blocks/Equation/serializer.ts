@@ -54,8 +54,13 @@ export class Equation extends ABCBlockElement<EquationProps, EquationState> {
 
   childrenDidMount(): void {}
 
+  updateEquation(value) {
+    latex.generateHTML(value, this.display, true);
+  }
+
   renderInner(): [Node[], Renderable[]] {
     const display = createElement("pre");
+    // display.contentEditable = "false";
 
     const caption = createElement("small");
 
@@ -68,13 +73,28 @@ export class Equation extends ABCBlockElement<EquationProps, EquationState> {
 
     const edit = createElement("textarea");
     edit.style.display = "none";
-    latex.generateHTML(this.equation, display, true);
+    edit.value = this.equation;
+
     this.display = display;
     this.caption = caption;
     this.edit = edit;
 
+    latex.generateHTML(this.equation, this.display, true);
     return [[this.display, this.edit, this.caption], []];
   }
+
+  showEdit() {
+    this.edit.style.display = null;
+    this.edit.focus();
+  }
+  closeEdit() {
+    if (this.edit.style.display === "none") {
+      return;
+    }
+    this.updateEquation(this.edit.value);
+    this.edit.style.display = "none";
+  }
+
   renderOuter(): HTMLElement {
     const outer = super.renderOuter();
     // outer.contentEditable = "false";

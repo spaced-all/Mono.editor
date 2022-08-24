@@ -134,13 +134,13 @@ export class TableHandler extends BlockHandler {
   handleTabDown(e: KeyboardEvent): boolean | void {
     e.preventDefault();
     if (e.shiftKey) {
-      this.parent.propagateWalkEditable({
+      this.parent.requestActivateEditable({
         current: this.currentEditable(),
         direction: "prev",
         handler: this,
       });
     } else {
-      this.parent.propagateWalkEditable({
+      this.parent.requestActivateEditable({
         current: this.currentEditable(),
         direction: "next",
         handler: this,
@@ -150,7 +150,7 @@ export class TableHandler extends BlockHandler {
   }
   handleEnterDown(e: KeyboardEvent): boolean | void {
     e.preventDefault();
-    this.parent.propagateWalkEditable({
+    this.parent.requestActivateEditable({
       current: this.currentEditable(),
       direction: "nextRow",
       handler: this,

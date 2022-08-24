@@ -149,6 +149,10 @@ export class PageHandler extends Handler {
       e.target as HTMLElement
     );
 
+    if (handler.handleMouseDown(e)) {
+      return;
+    }
+
     if (handler) {
       const eventData = handler.activate(editable);
       this.handleBlockActivate(eventData);
@@ -157,13 +161,6 @@ export class PageHandler extends Handler {
         this.richhint.remove();
         return;
       }
-    }
-
-    // this.updateActiveBlock(
-    //   this.getNodeHandler(e.target as HTMLElement).serializer.root
-    // );
-    if (handler.handleMouseDown(e)) {
-      return;
     }
   }
 
@@ -300,7 +297,7 @@ export class PageHandler extends Handler {
     if (e.key === "ArrowUp") {
       if (dom.isFirstLine(current)) {
         e.preventDefault();
-        this.propagateWalkEditable({
+        this.requestActivateEditable({
           current: current,
           direction: "prevRow",
           handler: this.activeBlockHandler,
@@ -309,7 +306,7 @@ export class PageHandler extends Handler {
     } else if (e.key === "ArrowDown") {
       if (dom.isLastLine(current)) {
         e.preventDefault();
-        this.propagateWalkEditable({
+        this.requestActivateEditable({
           current: current,
           direction: "nextRow",
           handler: this.activeBlockHandler,
@@ -324,7 +321,7 @@ export class PageHandler extends Handler {
         sel.focusOffset
       );
       if (!pos) {
-        this.propagateWalkEditable({
+        this.requestActivateEditable({
           current: current,
           direction: "prev",
           handler: this.activeBlockHandler,
@@ -367,7 +364,7 @@ export class PageHandler extends Handler {
       let pos: RelPosition;
       pos = dom.nextValidPosition(current, sel.focusNode, sel.focusOffset);
       if (!pos) {
-        this.propagateWalkEditable({
+        this.requestActivateEditable({
           current: current,
           direction: "next",
           handler: this.activeBlockHandler,
@@ -446,14 +443,74 @@ export class PageHandler extends Handler {
     this.focusTarget = pos;
   }
 
-  propagateWalkEditable(e: {
+  activateBlock(
+    prev: HTMLElement,
+    next: HTMLElement,
+    prevType: EditableType,
+    nextType: EditableType,
+    prevHandler: BlockHandler,
+    nextHandler: BlockHandler,
+    direction: WalkDirection
+  ) {
+    const richhint = this.richhint;
+
+    let offset = 0;
+    const activateEvent = nextHandler.activate(next);
+    this.handleBlockActivate(activateEvent);
+    if (nextType === "element") {
+      richhint.remove();
+      return;
+    }
+
+    const range = document.createRange();
+    if (prevType === "content") {
+      if (direction === "next") {
+        dom.setCaretReletivePosition(next, 0, range);
+      } else if (direction === "nextRow") {
+        offset = dom.getCaretReletivePositionAtLastLine(prev);
+        dom.setCaretReletivePosition(next, offset, range);
+      } else if (direction === "prev") {
+        dom.setCaretReletivePosition(next, -1, range);
+      } else {
+        offset = dom.getCaretReletivePosition(prev);
+        dom.setCaretReletivePositionAtLastLine(next, offset, range);
+      }
+    } else {
+      dom.setCaretReletivePosition(next, offset, range);
+    }
+
+    if (document.activeElement !== this.serializer.root) {
+      this.setFocusPosition(range);
+      this.serializer.root.focus({ preventScroll: true });
+    }
+
+    next["scrollIntoViewIfNeeded"](false);
+    dom.applyRange(range);
+    let pos = richhint.safePosition(dom.currentPosition(next));
+    dom.setPosition(pos);
+    richhint.autoUpdate({ root: next });
+  }
+
+  requestActivateEditable(e: {
     current: HTMLElement;
     handler: BlockHandler;
     direction: WalkDirection;
   }) {
-    const richhint = this.richhint;
     let { current, handler, direction } = e;
     const currentEditableType = handler.getEditableType(current);
+    if (direction === "self") {
+      this.activateBlock(
+        current,
+        current,
+        currentEditableType,
+        currentEditableType,
+        handler,
+        handler,
+        direction
+      );
+      return;
+    }
+
     let neighbor: HTMLElement;
     switch (direction) {
       case "prev":
@@ -469,65 +526,17 @@ export class PageHandler extends Handler {
         neighbor = handler.nextRow(current);
         break;
     }
-    const that = this;
-    function active(
-      prev: HTMLElement,
-      next: HTMLElement,
-      prevType: EditableType,
-      nextType: EditableType,
-      prevHandler: BlockHandler,
-      nextHandler: BlockHandler
-    ) {
-      let offset = 0;
-      const activateEvent = nextHandler.activate(next);
-      that.handleBlockActivate(activateEvent);
-      if (nextType === "element") {
-        richhint.remove();
-        return;
-      }
-
-      const range = document.createRange();
-      if (prevType === "content") {
-        if (direction === "next") {
-          dom.setCaretReletivePosition(next, 0, range);
-        } else if (direction === "nextRow") {
-          offset = dom.getCaretReletivePositionAtLastLine(prev);
-          dom.setCaretReletivePosition(next, offset, range);
-        } else if (direction === "prev") {
-          dom.setCaretReletivePosition(next, -1, range);
-        } else {
-          offset = dom.getCaretReletivePosition(prev);
-          dom.setCaretReletivePositionAtLastLine(next, offset, range);
-        }
-      } else {
-        dom.setCaretReletivePosition(next, offset, range);
-      }
-
-      if (document.activeElement !== that.serializer.root) {
-        that.setFocusPosition(range);
-        that.serializer.root.focus({ preventScroll: true });
-      }
-
-      next["scrollIntoViewIfNeeded"](false);
-      dom.applyRange(range);
-      let pos = richhint.safePosition(dom.currentPosition(next));
-      dom.setPosition(pos);
-      richhint.autoUpdate({ root: next });
-    }
-
     if (neighbor) {
       const editableType = handler.getEditableType(neighbor);
-      if (editableType === "content") {
-      } else if (editableType === "element") {
-        handler.selectElementEditable(neighbor);
-      }
-      active(
+
+      this.activateBlock(
         current,
         neighbor,
         currentEditableType,
         editableType,
         handler,
-        handler
+        handler,
+        direction
       );
       return;
     }
@@ -548,13 +557,14 @@ export class PageHandler extends Handler {
 
     if (neighbor) {
       const editableType = neighborHandler.getEditableType(neighbor);
-      active(
+      this.activateBlock(
         current,
         neighbor,
         currentEditableType,
         editableType,
         handler,
-        neighborHandler
+        neighborHandler,
+        direction
       );
     }
   }
@@ -714,9 +724,15 @@ export class PageHandler extends Handler {
   }
   handleEscapeDown(e: KeyboardEvent) {
     // this.edit.mode = "selection";
+    if (this.activeBlockHandler.handleEscapeDown(e)) {
+      return;
+    }
     e.preventDefault();
   }
   handleHomeDown(e: KeyboardEvent) {
+    if (this.activeBlockHandler.handleHomeDown(e)) {
+      return;
+    }
     const cur = this.currentEditable();
     dom.setCaretReletivePosition(cur, 0);
     e.preventDefault();

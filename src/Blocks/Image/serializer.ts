@@ -37,6 +37,7 @@ export class Image extends ABCBlockElement<ImageProps, ImageState> {
   elementType: ElementType = "card";
 
   image: HTMLImageElement;
+  input: HTMLInputElement;
   caption: HTMLElement;
 
   public get contentEditableName(): HTMLElementTagName {
@@ -57,6 +58,10 @@ export class Image extends ABCBlockElement<ImageProps, ImageState> {
 
   public get size(): number {
     return this.data.size || 100;
+  }
+
+  public get handlerType(): typeof ImageHandler {
+    return ImageHandler;
   }
 
   childrenDidMount(): void {}
@@ -88,10 +93,6 @@ export class Image extends ABCBlockElement<ImageProps, ImageState> {
     this.updateData(newData);
   }
 
-  public get handlerType(): typeof ImageHandler {
-    return ImageHandler;
-  }
-
   renderInner(): [Node[], Renderable[]] {
     const img = createElement("img");
     img.src = this.data.src;
@@ -108,9 +109,26 @@ export class Image extends ABCBlockElement<ImageProps, ImageState> {
     this.image = img;
     this.caption = caption;
 
-    return [[img, caption], renderables];
+    this.input = createElement("input");
+    this.input.style.display = "none";
+    this.input.value = this.data.src;
+    return [[img, caption, this.input], renderables];
     // return [];
   }
+
+  showInput() {
+    this.input.style.display = null;
+    this.input.focus();
+  }
+
+  closeInput() {
+    if (this.input.style.display === "none") {
+      return;
+    }
+    this.updateImage(this.input.value);
+    this.input.style.display = "none";
+  }
+
   renderOuter(): HTMLElement {
     const outer = super.renderOuter();
     // outer.contentEditable = "false";

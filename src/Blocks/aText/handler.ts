@@ -19,6 +19,18 @@ export class ABCTextHandler extends BlockHandler {
     };
   }
 
+  public get outer(): HTMLElement {
+    return this.serializer.outer;
+  }
+
+  getEditableByNode(node: Node): HTMLElement {
+    if (dom.isParent(node, this.outer)) {
+      return this.outer;
+    }
+    return null
+  }
+
+  
   handleEnterDown(e: KeyboardEvent): boolean | void {
     console.log(e);
     e.preventDefault();
