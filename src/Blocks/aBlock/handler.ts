@@ -122,6 +122,7 @@ export class BlockHandler extends Handler {
   handleUndo(e: Snapshot): boolean | void {}
 
   restore(e: Snapshot) {
+    console.log(["Restore", this]);
     if (e.data) {
       this.serializer.updateData(e.data);
       this.serializer.rerender();

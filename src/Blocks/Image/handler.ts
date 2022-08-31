@@ -1,6 +1,7 @@
 import produce from "immer";
 import { Image } from ".";
 import { serializeInlineElement } from "../../Inlines/serializer";
+import { Snapshot } from "../../operator/history";
 import { ActiveEvent } from "../../types/eventHandler";
 import { dom, time } from "../../utils";
 import { indexOfNode } from "../../utils/dom";
@@ -47,7 +48,7 @@ export class ImageHandler extends BlockHandler {
       el.style.opacity = "unset";
       // document.getSelection().setPosition(el, 0);
     }
-    this.serializer.closeInput()
+    this.serializer.closeInput();
   }
 
   currentEditable(): HTMLElement {
@@ -90,7 +91,15 @@ export class ImageHandler extends BlockHandler {
     }
     return "content";
   }
-
+  getEditableByIndex(...index: number[]): HTMLElement {
+    const ind = index[0];
+    if (ind === 0) {
+      return this.image;
+    } else if (ind === 1) {
+      return this.caption;
+    }
+    return null;
+  }
   firstEditable(): HTMLElement {
     return this.serializer.image;
   }
@@ -150,17 +159,21 @@ export class ImageHandler extends BlockHandler {
       return false;
     }
     // console.log(["ImageDown", e]);
-    
+
     e.preventDefault();
     switch (e.key) {
       case "[":
-        e.preventDefault()
+        e.preventDefault();
+        this.parent.handleBeforeInput(new InputEvent("beforeinput"));
         this.serializer.smaller();
         break;
       case "]":
-        e.preventDefault()
+        e.preventDefault();
+        this.parent.handleBeforeInput(new InputEvent("beforeinput"));
         this.serializer.bigger();
         break;
+      case "z":
+        return false;
     }
 
     return true;

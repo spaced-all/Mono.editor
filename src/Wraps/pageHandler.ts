@@ -873,10 +873,6 @@ export class PageHandler extends Handler {
     } else {
     }
 
-    if (this.activeBlockHandler.handleKeyDown(e)) {
-      return;
-    }
-
     if (e.metaKey) {
       if (e.key === "z") {
         e.preventDefault();
@@ -897,6 +893,10 @@ export class PageHandler extends Handler {
         e.preventDefault();
         return;
       }
+    }
+
+    if (this.activeBlockHandler.handleKeyDown(e)) {
+      return;
     }
   }
   handleKeyPress(e: KeyboardEvent): boolean | void {
@@ -940,6 +940,7 @@ export class PageHandler extends Handler {
     //     return;
     //   }
     // }
+    console.log("History");
     this.historyQueue.push(this.snapshot());
   }
   handleInput(e: InputEvent): boolean | void {
@@ -989,6 +990,7 @@ export class PageHandler extends Handler {
   }
   handleKeyDownRedo(e: KeyboardEvent) {
     const prev = this.historyQueue.redoData() as Snapshot;
+    console.log("Redo");
     if (prev) {
       if (prev.type === "changeBlock") {
         this.propgateChange(
@@ -1001,13 +1003,16 @@ export class PageHandler extends Handler {
       } else {
         const handler = this.getHandlerByOrder(prev.order);
         handler.restore(prev);
-        this.richhint.autoUpdate({ root: handler.currentEditable() });
+        if (handler.getEditableType(handler.currentEditable()) === "content") {
+          this.richhint.autoUpdate({ root: handler.currentEditable() });
+        }
       }
     }
   }
 
   handleKeyDownUndo(e: KeyboardEvent) {
     const prev = this.historyQueue.undoData(this.snapshot()) as Snapshot;
+    console.log("Undo");
     if (prev) {
       if (prev.type === "changeBlock") {
         this.propgateChange(
@@ -1020,7 +1025,10 @@ export class PageHandler extends Handler {
       } else {
         const handler = this.getHandlerByOrder(prev.order);
         handler.restore(prev);
-        this.richhint.autoUpdate({ root: handler.currentEditable() });
+
+        if (handler.getEditableType(handler.currentEditable()) === "content") {
+          this.richhint.autoUpdate({ root: handler.currentEditable() });
+        }
       }
     }
   }

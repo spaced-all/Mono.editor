@@ -3,7 +3,10 @@
  * https://Imagersblock.com/blog/highlight-text-inside-a-textarea/
  * https://css-tricks.com/creating-an-editable-textarea-that-supports-syntax-highlighted-Image/
  */
-import { renderInlineElement } from "../../Inlines/serializer";
+import {
+  renderInlineElement,
+  serializeInlineElement,
+} from "../../Inlines/serializer";
 import { InlineElement } from "../../Inlines/types";
 import { HTMLElementTagName } from "../../types/dom";
 import { createElement } from "../../utils/contrib";
@@ -16,7 +19,7 @@ import {
 import { ElementType, ImageData } from "../types";
 
 import { ImageHandler } from "./handler";
-import { dom } from "../../utils";
+import { dom, time } from "../../utils";
 import { Renderable } from "../../types/renderable";
 import produce from "immer";
 
@@ -66,6 +69,16 @@ export class Image extends ABCBlockElement<ImageProps, ImageState> {
 
   childrenDidMount(): void {}
 
+  serialize(): ImageData {
+    const lastEditTime = time.getTime();
+    const newData = produce(this.data, (draft) => {
+      draft.size = parseFloat(this.image.getAttribute("data-size"));
+      draft.caption = serializeInlineElement(dom.validChildNodes(this.caption));
+      draft.lastEditTime = lastEditTime;
+    });
+    return newData;
+  }
+
   bigger() {
     this.updateImage(null, this.size + 10);
   }
@@ -79,6 +92,7 @@ export class Image extends ABCBlockElement<ImageProps, ImageState> {
     }
     if (size) {
       size = Math.min(Math.max(size, 10), 100);
+      this.image.setAttribute("data-size", `${size}`);
       this.image.style.width = `${size}%`;
     }
 
@@ -94,8 +108,10 @@ export class Image extends ABCBlockElement<ImageProps, ImageState> {
   }
 
   renderInner(): [Node[], Renderable[]] {
+    console.log("Render Inner Image");
     const img = createElement("img");
     img.src = this.data.src;
+    img.setAttribute("data-size", `${this.size}`);
     img.style.width = `${this.size}%`;
 
     const caption = createElement("figcaption");
@@ -109,10 +125,11 @@ export class Image extends ABCBlockElement<ImageProps, ImageState> {
     this.image = img;
     this.caption = caption;
 
-    this.input = createElement("input");
+    const input = createElement("input");
+    this.input = input;
     this.input.style.display = "none";
     this.input.value = this.data.src;
-    return [[img, caption, this.input], renderables];
+    return [[img, caption, input], renderables];
     // return [];
   }
 
@@ -129,9 +146,8 @@ export class Image extends ABCBlockElement<ImageProps, ImageState> {
     this.input.style.display = "none";
   }
 
-  renderOuter(): HTMLElement {
-    const outer = super.renderOuter();
-    // outer.contentEditable = "false";
-    return outer;
-  }
+  // renderOuter(): HTMLElement {
+  //   const outer = super.renderOuter();
+  //   return outer;
+  // }
 }

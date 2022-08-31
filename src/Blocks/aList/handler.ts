@@ -289,6 +289,8 @@ export class ABCListHandler extends BlockHandler {
     }
     this.parent.richhint.remove();
 
+    this.parent.handleBeforeInput(new InputEvent("beforeinput"));
+
     const leftFrag = dom.validChildNodes(
       dom.cloneFragmentsBefore(this.currentEditable())
     );
