@@ -48,6 +48,7 @@ export class ParagraphHandler extends ABCTextHandler {
         this.parent.propgateChange({
           kind: "change",
           focus: newData,
+          handle: this,
         });
         e.preventDefault();
         return true;
@@ -68,6 +69,7 @@ export class ParagraphHandler extends ABCTextHandler {
         this.parent.propgateChange({
           kind: "change",
           focus: newData,
+          handle: this,
         });
         e.preventDefault();
         return true;
@@ -93,6 +95,7 @@ export class ParagraphHandler extends ABCTextHandler {
         this.parent.propgateChange({
           kind: "change",
           focus: newData,
+          handle: this,
         });
         e.preventDefault();
         return true;
@@ -118,6 +121,7 @@ export class ParagraphHandler extends ABCTextHandler {
         this.parent.propgateChange({
           kind: "change",
           focus: newData,
+          handle: this,
         });
         e.preventDefault();
         return true;

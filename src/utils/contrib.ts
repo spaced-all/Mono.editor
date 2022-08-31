@@ -69,6 +69,8 @@ export function createElement<K extends HTMLElementTagName>(
     el.addEventListener("click", handler.handleClick.bind(handler));
     el.addEventListener("input", handler.handleInput.bind(handler));
 
+    el.addEventListener("beforeinput", handler.handleBeforeInput.bind(handler));
+
     el.addEventListener(
       "compositionstart",
       handler.handleCompositionStart.bind(handler)

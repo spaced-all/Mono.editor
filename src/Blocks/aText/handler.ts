@@ -27,10 +27,9 @@ export class ABCTextHandler extends BlockHandler {
     if (dom.isParent(node, this.outer)) {
       return this.outer;
     }
-    return null
+    return null;
   }
 
-  
   handleEnterDown(e: KeyboardEvent): boolean | void {
     console.log(e);
     e.preventDefault();
@@ -123,6 +122,7 @@ export class ABCTextHandler extends BlockHandler {
         this.parent.propgateChange({
           kind: "change",
           focus: newData,
+          handle: this,
         });
       }
 

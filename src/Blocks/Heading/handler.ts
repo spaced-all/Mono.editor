@@ -36,6 +36,7 @@ export class HeadingHandler extends ABCTextHandler {
           this.parent.propgateChange({
             kind: "change",
             focus: newData,
+            handle: this,
           });
         } else {
           this.serializer.updateLevel(key.length);

@@ -1,3 +1,4 @@
+import { Snapshot } from "../../operator/history";
 import { Handler } from "../../types/eventHandler";
 import { dom } from "../../utils";
 import { PageHandler } from "../../Wraps/pageHandler";
@@ -74,7 +75,11 @@ export class BlockHandler extends Handler {
   nextRow(el: HTMLElement): HTMLElement {
     return this.nextEditable(el);
   }
-  
+
+  getEditableIndex(el): number[] {
+    return [0];
+  }
+
   getEditableByIndex(...index: number[]): HTMLElement {
     return this.serializer.outer;
   }
@@ -111,5 +116,18 @@ export class BlockHandler extends Handler {
   }
   appendElementsAtLast(node: Node[]) {
     this.appendElements(node, this.lastEditable());
+  }
+
+  handleRedo(e: Snapshot): boolean | void {}
+  handleUndo(e: Snapshot): boolean | void {}
+
+  restore(e: Snapshot) {
+    if (e.data) {
+      this.serializer.updateData(e.data);
+      this.serializer.rerender();
+
+      const cur = this.getEditableByIndex(...e.index);
+      dom.setCaretReletivePosition(cur, e.start);
+    }
   }
 }

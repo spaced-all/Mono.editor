@@ -75,14 +75,19 @@ export class ABCBlockElement<
   }
 
   updateData(data) {
-    this.state.data[this.state.data.type] = data;
+    this.state.data = produce(this.state.data, (draft) => {
+      draft[draft.type] = data;
+    });
   }
 
   serialize() {}
 
-  serializeBlockInfo(): DefaultBlockInfo {
+  serializeBlockInfo(data?): DefaultBlockInfo {
+    if (!data) {
+      data = this.serialize();
+    }
     return produce(this.state.data, (draft) => {
-      draft[draft.type] = this.serialize() as any;
+      draft[draft.type] = data as any;
       draft.lastEditTime = time.getTime();
     });
   }

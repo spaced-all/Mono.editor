@@ -12,6 +12,19 @@ export abstract class Renderable {
     this.childrenQueue = [];
   }
 
+  rerender() {
+    this.childrenQueue.forEach((c) => c.notifyDidUnMount());
+    this.childrenQueue = [];
+    this.root.innerHTML = "";
+
+    const [children, noticables] = this.renderChildren();
+    console.log([this, this.root, children]);
+    noticables.forEach((c) => c.render());
+
+    this.root.append(...children);
+    this.childrenQueue.push(...noticables);
+  }
+
   private notifyRootDidMount(): void {
     this.rootDidMount();
     const [children, noticables] = this.renderChildren();
@@ -25,10 +38,10 @@ export abstract class Renderable {
     this.notifyDidRendered();
   }
   private notifyDidRendered(): void {
-    this.childrenDidMount();
     this.childrenQueue.forEach((c) => {
       c.notifyDidRendered();
     });
+    this.childrenDidMount();
   }
   private notifyDidUnMount(): void {
     this.componentDidUnmount();
@@ -70,16 +83,21 @@ export abstract class Renderable {
 
   insertAfter(el: HTMLElement) {
     this.render();
-    el.insertAdjacentElement("beforeend", this.root);
+    el.insertAdjacentElement("afterend", this.root);
     this.notifyRootDidMount();
     return this;
   }
 
   insertBefore(el: HTMLElement) {
     this.render();
-    el.insertAdjacentElement("afterbegin", this.root);
+    el.insertAdjacentElement("beforebegin", this.root);
     this.notifyRootDidMount();
     return this;
+  }
+  appendIn(el: HTMLElement) {
+    this.render();
+    el.append(this.root);
+    this.notifyRootDidMount();
   }
 
   remove() {

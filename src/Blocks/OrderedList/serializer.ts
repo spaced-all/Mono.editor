@@ -65,16 +65,22 @@ export class OrderedList extends ABCList<OrderedListProps, OrderedListState> {
 
   updateLi(li: HTMLLIElement, level?, ind?, value?, children?: Node[]) {
     if (Number.isInteger(ind)) {
+      // if (li.getAttribute("data-index") === `${ind}`) {
       li.setAttribute("data-index", `${ind}`);
+      // }
     }
     if (Number.isInteger(level)) {
+      // if (li.getAttribute("data-level") === `${level}`) {
       li.setAttribute("data-level", `${level}`);
       const types = this.listStyleTypes;
       li.style.listStyleType = types[(level - 1) % types.length];
       li.style.marginLeft = `${(level - 1) * 40}px`;
+      // }
     }
     if (Number.isInteger(value)) {
+      // if (li.getAttribute("value") === `${value}`) {
       li.setAttribute("value", `${value}`);
+      // }
     }
     if (children) {
       li.innerHTML = "";

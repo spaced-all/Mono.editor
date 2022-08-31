@@ -37,7 +37,7 @@ const page = new Page({
   ],
 });
 
-page.insertAfter(document.body);
+page.appendIn(document.body);
 
 const page2 = new Page({
   initialData: [

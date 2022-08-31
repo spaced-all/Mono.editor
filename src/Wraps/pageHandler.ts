@@ -1,8 +1,18 @@
 import { BlockHandler } from "../Blocks/aBlock/handler";
 import { ABCListHandler } from "../Blocks/aList";
-import { DefaultBlockInfo, EditableType, WalkDirection } from "../Blocks/types";
+import {
+  DefaultBlockInfo,
+  EditableType,
+  OrderString,
+  WalkDirection,
+} from "../Blocks/types";
 import { IMath } from "../Inlines/math";
 import { renderInlineElement } from "../Inlines/serializer";
+import {
+  DeleteTextHistory,
+  InsertTextHistory,
+  Snapshot,
+} from "../operator/history";
 import { CreateEvent, MergeEvent, SplitEvent } from "../operator/message";
 import {
   ChangeBlock,
@@ -10,9 +20,10 @@ import {
   SplitBlock,
   TextFormat,
 } from "../operator/types";
+import { historyQueue, HistoryQueue } from "../struct/HistoryQueue";
 import { ActiveEvent, Handler } from "../types/eventHandler";
 import { Renderable } from "../types/renderable";
-import { dom, pos, style } from "../utils";
+import { dom, pos, style, time } from "../utils";
 import { RichHint } from "../utils/richhint";
 import { EditState, Page, PageProps, PageState } from "./Page";
 
@@ -21,6 +32,11 @@ export class PageHandler extends Handler {
   richhint: RichHint;
   // activeBlock: HTMLElement;
   focusTarget: Range;
+
+  compositionState?: "start" | "update" = null;
+
+  historyQueue: HistoryQueue = historyQueue;
+
   constructor(serializer: Renderable) {
     super(serializer);
     this.richhint = new RichHint();
@@ -39,7 +55,7 @@ export class PageHandler extends Handler {
   }
 
   public get isComposition(): boolean {
-    return this.edit.composite;
+    return this.compositionState !== null;
   }
 
   public get activeBlockRootElement(): HTMLDivElement {
@@ -47,6 +63,11 @@ export class PageHandler extends Handler {
     node = document.getSelection().focusNode as HTMLElement;
     node = dom.findParentMatchTagName(node, "div", this.root);
     return node as HTMLDivElement;
+  }
+
+  public get activeEditableIndex(): number[] {
+    const handler = this.activeBlockHandler;
+    return handler.getEditableIndex(handler.currentEditable());
   }
 
   public get activeBlockOrder(): string {
@@ -137,13 +158,16 @@ export class PageHandler extends Handler {
     return false;
   }
 
-  getNodeHandler(node: Node) {
+  getHandlerByNode(node: Node) {
     const order = this.getNodePosition(node).order;
-    return this.state.blockSerializers.getValue(order).handler;
+    return this.blockSerializers.getValue(order).handler;
+  }
+  getHandlerByOrder(order: OrderString) {
+    return this.blockSerializers.getValue(order).handler;
   }
 
   handleMouseDown(e: MouseEvent): void {
-    console.log(["page Mouse Down", e]);
+    // console.log(["page Mouse Down", e]);
 
     const { handler, editable, order } = this.getNodePosition(
       e.target as HTMLElement
@@ -166,6 +190,9 @@ export class PageHandler extends Handler {
 
   handleBlockActivate(e: ActiveEvent) {
     const { target, targetEditable, related, relatedEditable } = e;
+    if (target === related) {
+      return;
+    }
     if (related) {
       related.root.classList.remove("active");
     }
@@ -214,7 +241,6 @@ export class PageHandler extends Handler {
       root: this.currentEditable(),
       click: true,
     });
-    console.log();
   }
 
   prevEditable(): HTMLElement {
@@ -261,6 +287,12 @@ export class PageHandler extends Handler {
     } else if (e.metaKey) {
       // this.richhint.autoUpdate({ force: true })
       e.preventDefault();
+    }
+    const cur = this.currentEditable();
+    if (dom.isTag(cur.firstChild, "br")) {
+      this.currentEditable().removeChild(cur.firstChild);
+      let pos = this.richhint.safePosition(dom.currentPosition(cur));
+      dom.setPosition(pos);
     }
   }
 
@@ -569,13 +601,31 @@ export class PageHandler extends Handler {
     }
   }
 
-  processEdit(message) {}
-
-  propgateChange(e: ChangeBlock) {
+  propgateChange(e: ChangeBlock, inHistory?: boolean) {
+    let prev: Snapshot;
+    if (!inHistory) {
+      prev = this.snapshot();
+    }
     const offset = dom.getCaretReletivePosition(this.currentEditable());
     const focusedSerializer = this.serializer.changeBlock(e.focus);
     const focusedContainer = focusedSerializer.handler.firstEditable();
     dom.setCaretReletivePosition(focusedContainer, offset);
+
+    this.requestActivateEditable({
+      current: focusedContainer,
+      direction: "self",
+      handler: focusedSerializer.handler,
+    });
+
+    if (!inHistory) {
+      prev.type = "changeBlock";
+      prev.data = {
+        prev: e.handle.serializer.serializeBlockInfo(prev.data),
+        next: focusedSerializer.serializeBlockInfo(),
+      };
+      this.historyQueue.push(prev);
+    }
+
     this.richhint.autoUpdate({
       root: focusedContainer,
     });
@@ -584,7 +634,7 @@ export class PageHandler extends Handler {
   propgateDelete(e) {}
 
   propgateSplit(e: SplitEvent) {
-    console.log(e);
+    // console.log(e);
     if (e.prev) {
       this.serializer.insertBlockBefore(e.prev, e.order);
     }
@@ -603,9 +653,11 @@ export class PageHandler extends Handler {
     // this.serializer.changeBlock()
   }
   propgateNew(e: CreateEvent) {
-    console.log(e);
+    // console.log(e);
+
     const newSerializer = this.serializer.insertBlockAfter(e.block, e.order);
     const editable = newSerializer.handler.firstEditable();
+
     if (e.offset !== undefined) {
       dom.setCaretReletivePosition(editable, e.offset);
     }
@@ -615,10 +667,11 @@ export class PageHandler extends Handler {
     dom.setPosition(pos);
     this.richhint.autoUpdate({ root: editable });
   }
+
   propgateMerge(e: MergeEvent) {
     let neighborHandler: BlockHandler;
     let neighbor: HTMLElement;
-    console.log(e);
+    // console.log(e);
     if (e.mergeType === "backspace") {
       neighborHandler = this.prevBlockHandler;
       neighbor = neighborHandler.lastEditable();
@@ -745,7 +798,7 @@ export class PageHandler extends Handler {
     dom.setCaretReletivePosition(cur, -1);
     let pos = this.richhint.safePosition(dom.currentPosition(cur));
     dom.setPosition(pos);
-    console.log(pos);
+    // console.log(pos);
     this.richhint.autoUpdate({ root: cur });
     e.preventDefault();
   }
@@ -774,7 +827,7 @@ export class PageHandler extends Handler {
       e.preventDefault();
       return;
     }
-    console.log(["Page Key Down", e]);
+    // console.log(["Page Key Down", e]);
     // dom.currentPosition(this.)
     if (e.key === "Enter") {
       const pos = dom.currentPosition(this.currentEditable());
@@ -825,6 +878,16 @@ export class PageHandler extends Handler {
     }
 
     if (e.metaKey) {
+      if (e.key === "z") {
+        e.preventDefault();
+        if (e.shiftKey) {
+          this.handleKeyDownRedo(e);
+        } else {
+          this.handleKeyDownUndo(e);
+        }
+        return;
+      }
+
       if (style.supportStyleKey(e.key)) {
         style.applyStyle(e.key, this.currentEditable());
         this.richhint.autoUpdate({
@@ -853,23 +916,51 @@ export class PageHandler extends Handler {
       return;
     }
   }
-  handleInput(e: Event): boolean | void {
+
+  handleBeforeInput(e: InputEvent): boolean | void {
+    if (this.activeBlockHandler.handleBeforeInput(e)) {
+      return;
+    }
+
+    // const prevHistory = this.historyQueue.current();
+    // const lastEditTime = time.getTime();
+
+    // if (!prevHistory) {
+    //   const history = this.snapshot();
+    //   this.historyQueue.push(history);
+    //   return;
+    // }
+
+    // if (prevHistory.type.match("insert") || prevHistory.type.match("delete")) {
+    //   // 在同一个 block 做的小于 5 秒的修改不记录
+    //   if (
+    //     prevHistory.order === prevHistory.order &&
+    //     Math.round((lastEditTime - prevHistory.lastEditTime) / 1000) < 5
+    //   ) {
+    //     return;
+    //   }
+    // }
+    this.historyQueue.push(this.snapshot());
+  }
+  handleInput(e: InputEvent): boolean | void {
     if (this.activeBlockHandler.handleInput(e)) {
       return;
     }
   }
 
   handleMouseEnter(e: MouseEvent): boolean | void {
+    // console.log(e);
+  }
+  handleCopy(e: ClipboardEvent): boolean | void {
     console.log(e);
   }
-  handleCopy(e: ClipboardEvent): boolean | void {}
   handlePaste(e: ClipboardEvent): boolean | void {
     if (this.activeBlockHandler.handlePaste(e)) {
       return;
     }
   }
   handleFocus(e: FocusEvent): boolean | void {
-    console.log(["Page Focus", e]);
+    // console.log(["Page Focus", e]);
     // if (this.focusTarget) {
     //   dom.applyRange(this.focusTarget);
     //   const { container } = this.getNodePosition(
@@ -880,6 +971,73 @@ export class PageHandler extends Handler {
     // console.log(["Focus", e]);
   }
   handleBlur(e: FocusEvent): boolean | void {
-    console.log(["Page Blur", e]);
+    // console.log(["Page Blur", e]);
   }
+
+  snapshot(): Snapshot {
+    const handler = this.activeBlockHandler;
+    const cur = this.currentEditable();
+    const offset = dom.getCaretReletivePosition(cur);
+    console.log(offset);
+    return {
+      data: handler.serializer.serialize(),
+      order: handler.order,
+      start: offset,
+      index: handler.getEditableIndex(cur),
+      lastEditTime: time.getTime(),
+    };
+  }
+  handleKeyDownRedo(e: KeyboardEvent) {
+    const prev = this.historyQueue.redoData() as Snapshot;
+    if (prev) {
+      if (prev.type === "changeBlock") {
+        this.propgateChange(
+          {
+            focus: prev.data.next,
+            kind: "change",
+          },
+          true
+        );
+      } else {
+        const handler = this.getHandlerByOrder(prev.order);
+        handler.restore(prev);
+        this.richhint.autoUpdate({ root: handler.currentEditable() });
+      }
+    }
+  }
+
+  handleKeyDownUndo(e: KeyboardEvent) {
+    const prev = this.historyQueue.undoData(this.snapshot()) as Snapshot;
+    if (prev) {
+      if (prev.type === "changeBlock") {
+        this.propgateChange(
+          {
+            focus: prev.data.prev,
+            kind: "change",
+          },
+          true
+        );
+      } else {
+        const handler = this.getHandlerByOrder(prev.order);
+        handler.restore(prev);
+        this.richhint.autoUpdate({ root: handler.currentEditable() });
+      }
+    }
+  }
+
+  handleCompositionStart(e: CompositionEvent): boolean | void {
+    console.log("composition Start");
+    this.compositionState = "start";
+  }
+  handleCompositionUpdate(e: CompositionEvent): boolean | void {
+    console.log("composition Update");
+    this.compositionState = "update";
+  }
+  handleCompositionEnd(e: CompositionEvent): boolean | void {
+    console.log("composition End");
+    this.compositionState = null;
+  }
+  // handleMutation(mutationList, observer) {
+  //   console.log(["mutation", mutationList, observer]);
+  // }
 }

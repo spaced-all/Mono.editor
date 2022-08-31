@@ -184,6 +184,7 @@ export class Handler {
   handleClick(e: MouseEvent): void | boolean {}
   handleContextMenu(e: MouseEvent): void | boolean {}
   handleInput(e: Event): void | boolean {}
+  handleBeforeInput(e: InputEvent): void | boolean {}
   handleCompositionEnd(e: CompositionEvent): void | boolean {}
   handleCompositionStart(e: CompositionEvent): void | boolean {}
   handleCompositionUpdate(e: CompositionEvent): void | boolean {}

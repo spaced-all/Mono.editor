@@ -1,8 +1,10 @@
+import { BlockHandler } from "../Blocks/aBlock";
 import {
   BlockComponentType,
   BlockType,
   DefaultBlockInfo,
 } from "../Blocks/types";
+import { Handler } from "../types/eventHandler";
 
 export declare type BlockUri = string;
 export declare type InlineUri = string;
@@ -70,7 +72,7 @@ export interface ComponentEdit {
 
 export interface BlockOperation {
   kind: string;
-
+  handle?: BlockHandler;
   prev?: DefaultBlockInfo;
   focus?: DefaultBlockInfo;
   next?: DefaultBlockInfo;

@@ -150,8 +150,8 @@ export class ImageHandler extends BlockHandler {
       return false;
     }
     // console.log(["ImageDown", e]);
-    // e.preventDefault();
-
+    
+    e.preventDefault();
     switch (e.key) {
       case "[":
         e.preventDefault()

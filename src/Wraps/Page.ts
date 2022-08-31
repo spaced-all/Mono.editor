@@ -32,7 +32,6 @@ export interface PageState {
 }
 
 export interface EditState {
-  composite: boolean;
   mode: "edit" | "selection" | "preview";
   typeHistory: string[];
 }
@@ -42,6 +41,8 @@ export class Page extends Renderable {
   state: PageState;
   handler: PageHandler;
   edit: EditState;
+
+  // mutationObserver: MutationObserver;
 
   constructor(props: PageProps) {
     super();
@@ -60,7 +61,6 @@ export class Page extends Renderable {
       blockSerializers: new LinkedDict(),
     };
     this.edit = {
-      composite: false,
       typeHistory: [],
       mode: "edit",
     };
@@ -68,6 +68,14 @@ export class Page extends Renderable {
   }
 
   rootDidMount(): void {}
+  childrenDidMount(): void {
+    // this.mutationObserver = new MutationObserver(
+    //   this.handler.handleMutation.bind(this)
+    // );
+    // const config = { attributes: true, childList: true, subtree: true };
+    // this.mutationObserver.observe(this.root, config);
+    // console.log("mutation bind");
+  }
 
   /**
    * 按 order 顺序遍历所有 block

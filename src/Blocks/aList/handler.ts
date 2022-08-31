@@ -46,7 +46,13 @@ export class ABCListHandler extends BlockHandler {
   firstEditable(): HTMLElement {
     return this.serializer.outer.querySelector("li:first-child");
   }
-
+  getEditableByIndex(...index: number[]): HTMLElement {
+    const ind = index[0];
+    return this.serializer.outer.querySelector(`li:nth-child(${ind + 1})`);
+  }
+  getEditableIndex(el: HTMLElement): number[] {
+    return [parseFloat(el.getAttribute("data-index"))];
+  }
   removeContainer(el: HTMLElement) {
     if (el.parentElement !== this.serializer.outer) {
       return false;
@@ -119,6 +125,7 @@ export class ABCListHandler extends BlockHandler {
   }
 
   changeIndent(offset) {
+    this.parent.root.dispatchEvent(new InputEvent("beforeinput"));
     const els = this.selectedContainer();
 
     for (const el of els) {
@@ -127,6 +134,8 @@ export class ABCListHandler extends BlockHandler {
       this.serializer.updateLi(el as any as HTMLLIElement, level);
     }
     this.serializer.updateValue();
+    const event = new InputEvent("input", { data: "1", res: {} } as any);
+    event["res"] = { index: this.currentEditable() };
   }
 
   handleBackspaceDown(e: KeyboardEvent): boolean | void {
